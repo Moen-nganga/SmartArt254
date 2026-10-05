@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/schools", "destination": "/index.html" },
+    { "source": "/workshops", "destination": "/index.html" },
+    { "source": "/events", "destination": "/index.html" },
+    { "source": "/book", "destination": "/index.html" }
+  ]
+}
