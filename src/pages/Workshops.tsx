@@ -1,17 +1,17 @@
 import Layout from "../components/Layout";
-import Section from "../components/Section";
+import FeatureList from "../components/FeatureList";
 import { workshopOffers } from "../data";
 
 export default function Workshops() {
   return (
     <Layout>
-      <div className="pt-6">
-        <Section
-          heading="Workshops"
-          intro="Pick a craft. Our host brings the supplies and guides everyone through it."
-          offers={workshopOffers}
-        />
-      </div>
+      <FeatureList
+        heading="Art workshops and crafts"
+        intro="Pick one activity or mix several in a single session."
+        label="Workshops"
+        folder="workshops"
+        offers={workshopOffers}
+      />
     </Layout>
   );
 }

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { Offer } from "../data";
 import OfferCard from "./OfferCard";
 import { link } from "../navigate";
+import Reveal from "./Reveal";
 
 interface Props {
   heading: string;
@@ -17,8 +18,10 @@ export default function Section({ heading, intro, offers, cta = true, children }
       <h2 className="text-3xl font-bold sm:text-4xl">{heading}</h2>
       <p className="mt-2 max-w-xl text-base text-white/85 sm:text-lg">{intro}</p>
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {offers.map((o) => (
-          <OfferCard key={o.title} {...o} />
+        {offers.map((o, i) => (
+          <Reveal key={o.title} from="up" delay={(i % 3) * 120} className="h-full">
+            <OfferCard {...o} />
+          </Reveal>
         ))}
       </div>
       {children}

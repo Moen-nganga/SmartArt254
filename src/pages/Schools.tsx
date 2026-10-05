@@ -1,17 +1,17 @@
 import Layout from "../components/Layout";
-import Section from "../components/Section";
+import FeatureList from "../components/FeatureList";
 import { schoolOffers } from "../data";
 
 export default function Schools() {
   return (
     <Layout>
-      <div className="pt-6">
-        <Section
-          heading="For schools"
-          intro="Programmes that fit the timetable and get every learner making."
-          offers={schoolOffers}
-        />
-      </div>
+      <FeatureList
+        heading="For schools"
+        intro="Programmes that fit the timetable and get every learner making."
+        label="Schools"
+        folder="schools"
+        offers={schoolOffers}
+      />
     </Layout>
   );
 }
