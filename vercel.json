@@ -3,6 +3,9 @@
     { "source": "/schools", "destination": "/index.html" },
     { "source": "/workshops", "destination": "/index.html" },
     { "source": "/events", "destination": "/index.html" },
-    { "source": "/book", "destination": "/index.html" }
+    { "source": "/book", "destination": "/index.html" },
+    { "source": "/privacy", "destination": "/index.html" },
+    { "source": "/terms", "destination": "/index.html" },
+    { "source": "/blog", "destination": "/index.html" }
   ]
 }

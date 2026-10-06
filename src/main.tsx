@@ -6,6 +6,12 @@ import Schools from "./pages/Schools";
 import Workshops from "./pages/Workshops";
 import Events from "./pages/Events";
 import Book from "./pages/Book";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import Blog from "./pages/Blog";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
+import Member from "./pages/Member";
 
 const routes: Record<string, () => JSX.Element> = {
   "/": Home,
@@ -13,6 +19,12 @@ const routes: Record<string, () => JSX.Element> = {
   "/workshops": Workshops,
   "/events": Events,
   "/book": Book,
+  "/privacy": Privacy,
+  "/terms": Terms,
+  "/blog": Blog,
+  "/signin": SignIn,
+  "/signup": SignUp,
+  "/member": Member,
 };
 
 const path = window.location.pathname.replace(/\/$/, "") || "/";

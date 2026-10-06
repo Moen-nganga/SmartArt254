@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
 import Layout from "../components/Layout";
 import { bookingOptions } from "../data";
+import { getUser } from "../auth";
 
 interface FormState {
   name: string;
@@ -30,6 +31,18 @@ export default function Book() {
   const [form, setForm] = useState<FormState>(empty);
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [error, setError] = useState("");
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    getUser().then((user) => {
+      if (!user) {
+        window.location.href = "/signin?next=/book";
+        return;
+      }
+      setForm((f) => ({ ...f, name: user.name, email: user.email }));
+      setChecking(false);
+    });
+  }, []);
 
   const update = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -43,6 +56,10 @@ export default function Book() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
+      if (res.status === 401) {
+        window.location.href = "/signin?next=/book";
+        return;
+      }
       const data = await res.json();
       if (!res.ok) {
         setError(data.error ?? "Something went wrong.");
@@ -58,6 +75,14 @@ export default function Book() {
   };
 
   const ready = form.name && form.email && form.phone && form.eventDate && Number(form.guests) > 0;
+
+  if (checking) {
+    return (
+      <Layout>
+        <p className="mx-auto max-w-xl px-5 py-16 text-xl font-semibold">Checking your account</p>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
