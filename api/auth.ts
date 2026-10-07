@@ -1,7 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { clearCookie, getUserId, makeCookie } from "./_session";
+import { clearCookie, getUserId, makeCookie } from "./_session.js";
 
 function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");

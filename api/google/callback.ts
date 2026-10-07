@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { makeCookie } from "../_session";
+import { makeCookie } from "../_session.js";
 
 const clearState = "g_state=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0";
 
