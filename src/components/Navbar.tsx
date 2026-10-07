@@ -22,7 +22,7 @@ export default function Navbar() {
   const accountPath = user ? "/member" : "/signin";
 
   return (
-    <header className="flex w-full flex-wrap border-b border-white/40 items-center justify-between gap-x-8 gap-y-2 px-5 py-5 sm:px-10 sm:py-7">
+    <header className="flex w-full flex-wrap items-center justify-between gap-x-8 gap-y-2 border-b border-ink/15 px-5 py-5 sm:px-10 sm:py-7">
       <a href="/" onClick={link("/")} className="text-4xl font-extrabold leading-none tracking-tight sm:text-6xl">
         Smart<span className="text-pink">Art</span>254
       </a>
@@ -33,7 +33,7 @@ export default function Navbar() {
             href={item.path}
             onClick={link(item.path)}
             aria-current={current === item.path ? "page" : undefined}
-            className={current === item.path ? "text-sun" : "hover:text-sun"}
+            className={current === item.path ? "text-pink" : "hover:text-pink"}
           >
             {item.label}
           </a>
@@ -42,7 +42,7 @@ export default function Navbar() {
           href={accountPath}
           onClick={link(accountPath)}
           aria-current={current === accountPath ? "page" : undefined}
-          className={`rounded-full bg-sun px-5 py-2 text-base font-bold text-purple-950 transition hover:brightness-110 sm:text-xl ${
+          className={`rounded-full bg-sun px-5 py-2 text-base font-bold text-ink transition hover:brightness-105 sm:text-xl ${
             user === undefined ? "invisible" : ""
           }`}
         >

@@ -41,7 +41,7 @@ export default function SignUp() {
   }
 
   const field =
-    "w-full rounded-full border border-white/40 bg-white/10 px-6 py-4 text-lg font-semibold text-white placeholder:text-white/60 focus:border-sun focus:outline-none focus:ring-2 focus:ring-sun/60";
+    "w-full rounded-full border-2 border-ink/20 bg-white px-6 py-4 text-lg font-semibold text-ink placeholder:text-ink/40 focus:border-royal focus:outline-none focus:ring-2 focus:ring-royal/30";
 
   return (
     <Layout>
@@ -49,30 +49,28 @@ export default function SignUp() {
         <h1 className="text-center text-4xl font-extrabold leading-tight tracking-tight sm:text-6xl">
           Create your account.
         </h1>
-        <p className="mt-4 max-w-md text-center text-lg font-semibold leading-relaxed text-white/90 sm:text-xl">
+        <p className="mt-4 max-w-md text-center text-lg font-semibold leading-relaxed text-ink/80 sm:text-xl">
           Join SmartArt254 to book activities and keep track of your upcoming sessions.
         </p>
 
-        <div className="mt-10 w-full rounded-3xl border border-white/30 bg-white/10 p-6 shadow-xl backdrop-blur-sm sm:p-10">
+        <div className="mt-10 w-full rounded-3xl border border-ink/10 bg-white/80 p-6 shadow-xl backdrop-blur-sm sm:p-10">
           <button
             type="button"
             onClick={handleGoogle}
-            className="flex w-full items-center justify-center gap-3 rounded-full border border-white/60 px-6 py-4 text-lg font-bold transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sun/60"
+            className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-ink/20 bg-white px-6 py-4 text-lg font-bold text-ink transition hover:bg-mist focus:outline-none focus:ring-2 focus:ring-royal/40"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white">
-              <GoogleIcon />
-            </span>
+            <GoogleIcon />
             Sign up with Google
           </button>
 
-          <div className="my-7 flex items-center gap-4 text-base font-semibold text-white/70">
-            <span className="h-px flex-1 bg-white/40" />
+          <div className="my-7 flex items-center gap-4 text-base font-semibold text-ink/60">
+            <span className="h-px flex-1 bg-ink/20" />
             or use your email
-            <span className="h-px flex-1 bg-white/40" />
+            <span className="h-px flex-1 bg-ink/20" />
           </div>
 
           {error && (
-            <p role="alert" className="mb-4 rounded-xl bg-pink px-4 py-3 font-semibold">
+            <p role="alert" className="mb-4 rounded-xl bg-pink px-4 py-3 font-semibold text-white">
               {error}
             </p>
           )}
@@ -121,15 +119,15 @@ export default function SignUp() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-3 w-full rounded-full bg-sun px-6 py-4 text-lg font-bold text-purple-950 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-white/80 disabled:opacity-60"
+              className="mt-3 w-full rounded-full bg-sun px-6 py-4 text-lg font-bold text-ink transition hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-royal/60 disabled:opacity-60"
             >
               {loading ? "Creating account" : "Create account"}
             </button>
           </form>
 
-          <p className="mt-6 text-base font-semibold text-white/85">
+          <p className="mt-6 text-base font-semibold text-ink/80">
             Already have an account?{" "}
-            <a href={`/signin${search}`} onClick={link(`/signin${search}`)} className="text-sun hover:underline">
+            <a href={`/signin${search}`} onClick={link(`/signin${search}`)} className="text-royal hover:underline">
               Sign in
             </a>
           </p>

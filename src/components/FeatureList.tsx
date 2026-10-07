@@ -22,7 +22,7 @@ function Photo({ src, alt }: { src: string; alt: string }) {
 
   if (failed) {
     return (
-      <div className="flex aspect-[4/5] w-full items-center justify-center rounded-3xl border-2 border-dashed border-white/50 bg-ink/60 p-6 text-center text-lg text-white/70">
+      <div className="flex aspect-[4/5] w-full items-center justify-center rounded-3xl border-2 border-dashed border-ink/25 bg-gradient-to-br from-pink-soft via-sun-soft to-royal-soft p-6 text-center text-lg font-semibold text-ink/60">
         Photo coming soon
       </div>
     );
@@ -34,7 +34,7 @@ function Photo({ src, alt }: { src: string; alt: string }) {
       alt={alt}
       loading="lazy"
       onError={() => setFailed(true)}
-      className="aspect-[4/5] w-full rounded-3xl object-cover"
+      className="aspect-[4/5] w-full rounded-3xl object-cover shadow-xl"
     />
   );
 }
@@ -52,7 +52,7 @@ export default function FeatureList({ heading, intro, label, folder, offers }: P
     <section className="mx-auto max-w-6xl px-5 pb-16 pt-4 sm:px-10">
       <Reveal from="up">
         <h1 className="text-4xl font-extrabold sm:text-6xl">{heading}</h1>
-        <p className="mt-3 max-w-2xl text-lg text-white/90 sm:text-xl">{intro}</p>
+        <p className="mt-3 max-w-2xl text-lg text-ink/80 sm:text-xl">{intro}</p>
       </Reveal>
 
       <div className="mt-10 grid gap-14 sm:mt-14 sm:gap-24">
@@ -68,9 +68,9 @@ export default function FeatureList({ heading, intro, label, folder, offers }: P
               </Reveal>
               <Reveal from={odd ? "left" : "right"} delay={150}>
                 <div className={`h-2 w-12 rounded-full ${bars[o.accent]}`} />
-                <p className="mt-3 text-sm font-semibold uppercase tracking-wider text-white/70">{label}</p>
+                <p className="mt-3 text-sm font-semibold uppercase tracking-wider text-ink/70">{label}</p>
                 <h2 className="mt-1 text-3xl font-extrabold leading-tight sm:text-5xl">{o.title}</h2>
-                <p className="mt-4 max-w-md text-lg text-white/90 sm:text-xl">{o.text}</p>
+                <p className="mt-4 max-w-md text-lg text-ink/80 sm:text-xl">{o.text}</p>
                 <a
                   href="/book"
                   onClick={link("/book")}

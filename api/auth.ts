@@ -21,13 +21,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     if (action === "me") {
-  const id = getUserId(req);
-  if (!id) return res.status(401).json({ error: "Not signed in" });
-  const rows = await sql`SELECT id, name, email FROM users WHERE id = ${id}`;
-  if (!rows.length) return res.status(401).json({ error: "Not signed in" });
-  res.setHeader("Set-Cookie", makeCookie(id));
-  return res.status(200).json({ user: rows[0] });
-}
+      const id = getUserId(req);
+      if (!id) return res.status(401).json({ error: "Not signed in" });
+      const rows = await sql`SELECT id, name, email, is_admin AS "isAdmin" FROM users WHERE id = ${id}`;
+      if (!rows.length) return res.status(401).json({ error: "Not signed in" });
+      return res.status(200).json({ user: rows[0] });
+    }
 
     if (req.method !== "POST") {
       res.setHeader("Allow", "POST");
@@ -60,7 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (action === "signin") {
       const rows = await sql`SELECT id, name, email, password_hash FROM users WHERE email = ${cleanEmail}`;
-      if (!rows.length || !rows[0].password_hash || !checkPassword(String(password ?? ""), rows[0].password_hash)) {
+      if (!rows.length || !checkPassword(String(password ?? ""), rows[0].password_hash)) {
         return res.status(401).json({ error: "Incorrect email or password." });
       }
       res.setHeader("Set-Cookie", makeCookie(rows[0].id));

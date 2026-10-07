@@ -2,6 +2,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
+  isAdmin: boolean;
 }
 
 async function call(action: string, body?: object) {

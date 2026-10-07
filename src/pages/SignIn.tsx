@@ -46,7 +46,7 @@ export default function SignIn() {
   }
 
   const field =
-    "w-full rounded-full border border-white/40 bg-white/10 px-6 py-4 text-lg font-semibold text-white placeholder:text-white/60 focus:border-sun focus:outline-none focus:ring-2 focus:ring-sun/60";
+    "w-full rounded-full border-2 border-ink/20 bg-white px-6 py-4 text-lg font-semibold text-ink placeholder:text-ink/40 focus:border-royal focus:outline-none focus:ring-2 focus:ring-royal/30";
 
   return (
     <Layout>
@@ -54,30 +54,28 @@ export default function SignIn() {
         <h1 className="text-center text-4xl font-extrabold leading-tight tracking-tight sm:text-6xl">
           Welcome back.
         </h1>
-        <p className="mt-4 max-w-md text-center text-lg font-semibold leading-relaxed text-white/90 sm:text-xl">
+        <p className="mt-4 max-w-md text-center text-lg font-semibold leading-relaxed text-ink/80 sm:text-xl">
           Sign in to book activities and keep track of your upcoming sessions.
         </p>
 
-        <div className="mt-10 w-full rounded-3xl border border-white/30 bg-white/10 p-6 shadow-xl backdrop-blur-sm sm:p-10">
+        <div className="mt-10 w-full rounded-3xl border border-ink/10 bg-white/80 p-6 shadow-xl backdrop-blur-sm sm:p-10">
           <button
             type="button"
             onClick={handleGoogle}
-            className="flex w-full items-center justify-center gap-3 rounded-full border border-white/60 px-6 py-4 text-lg font-bold transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-sun/60"
+            className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-ink/20 bg-white px-6 py-4 text-lg font-bold text-ink transition hover:bg-mist focus:outline-none focus:ring-2 focus:ring-royal/40"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white">
-              <GoogleIcon />
-            </span>
+            <GoogleIcon />
             Continue with Google
           </button>
 
-          <div className="my-7 flex items-center gap-4 text-base font-semibold text-white/70">
-            <span className="h-px flex-1 bg-white/40" />
+          <div className="my-7 flex items-center gap-4 text-base font-semibold text-ink/60">
+            <span className="h-px flex-1 bg-ink/20" />
             or use your email
-            <span className="h-px flex-1 bg-white/40" />
+            <span className="h-px flex-1 bg-ink/20" />
           </div>
 
           {error && (
-            <p role="alert" className="mb-4 rounded-xl bg-pink px-4 py-3 font-semibold">
+            <p role="alert" className="mb-4 rounded-xl bg-pink px-4 py-3 font-semibold text-white">
               {error}
             </p>
           )}
@@ -112,20 +110,20 @@ export default function SignIn() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-3 w-full rounded-full bg-sun px-6 py-4 text-lg font-bold text-purple-950 transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-white/80 disabled:opacity-60"
+              className="mt-3 w-full rounded-full bg-sun px-6 py-4 text-lg font-bold text-ink transition hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-royal/60 disabled:opacity-60"
             >
               {loading ? "Signing in" : "Sign in"}
             </button>
           </form>
 
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-base font-semibold text-white/85">
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-base font-semibold text-ink/80">
             <span>
               New here?{" "}
-              <a href={`/signup${search}`} onClick={link(`/signup${search}`)} className="text-sun hover:underline">
+              <a href={`/signup${search}`} onClick={link(`/signup${search}`)} className="text-royal hover:underline">
                 Create an account
               </a>
             </span>
-            <a href="/forgot-password" onClick={link("/forgot-password")} className="hover:text-sun hover:underline">
+            <a href="/forgot-password" onClick={link("/forgot-password")} className="hover:text-pink hover:underline">
               Forgot password?
             </a>
           </div>
