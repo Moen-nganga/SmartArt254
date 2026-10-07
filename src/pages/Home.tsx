@@ -3,7 +3,7 @@ import Highlight from "../components/Highlight";
 import Icon from "../components/Icon";
 import Photo from "../components/Photo";
 import Reveal from "../components/Reveal";
-import { whatsappNumber } from "../data";
+import WhatsAppMenu from "../components/WhatsAppMenu";
 import { link } from "../navigate";
 
 const dots = ["bg-pink", "bg-sun", "bg-leaf", "bg-royal"];
@@ -149,18 +149,15 @@ export default function Home() {
             <p className="mx-auto mt-3 max-w-xl text-lg text-white/85">
               Tell us your date and group size and we will confirm a host.
             </p>
-            <div className="mt-7 flex flex-wrap justify-center gap-3">
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
               <a href="/book" onClick={link("/book")} className="rounded-full bg-sun px-7 py-3 text-lg font-bold text-ink">
                 Book an activity
               </a>
-              <a
-                href={`https://wa.me/${whatsappNumber}`}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full border-2 border-white px-7 py-3 text-lg font-bold text-white"
-              >
-                Chat on WhatsApp
-              </a>
+              <WhatsAppMenu
+                label="Chat on WhatsApp"
+                buttonClassName="rounded-full border-2 border-white px-7 py-3 text-lg font-bold text-white transition hover:bg-white/10"
+                menuClassName="left-1/2 -translate-x-1/2"
+              />
             </div>
           </div>
         </Reveal>

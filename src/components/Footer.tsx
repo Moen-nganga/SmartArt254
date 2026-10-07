@@ -1,5 +1,5 @@
 import { link } from "../navigate";
-import { whatsappNumber } from "../data";
+import WhatsAppMenu from "./WhatsAppMenu";
 
 const items = [
   { label: "Privacy", path: "/privacy" },
@@ -23,14 +23,7 @@ export default function Footer() {
               {item.label}
             </a>
           ))}
-          <a
-            href={`https://wa.me/${whatsappNumber}`}
-            target="_blank"
-            rel="noreferrer"
-            className="hover:text-pink"
-          >
-            WhatsApp
-          </a>
+          <WhatsAppMenu buttonClassName="hover:text-pink" menuClassName="left-0 sm:left-auto sm:right-0" />
         </nav>
       </div>
       <p className="mx-auto max-w-6xl px-5 pb-8 text-sm text-ink/60 sm:px-10">

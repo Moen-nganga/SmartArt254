@@ -8,7 +8,7 @@ export default function Blog() {
       sections={[
         {
           heading: "Coming soon",
-          body: "We are putting our first posts together. Check back soon, or message us on WhatsApp to ask about an activity.",
+          body: "Blogs from our recent art events and conventions will be regulalry updated here.",
         },
       ]}
     />
