@@ -353,7 +353,7 @@ export default function Member() {
             aria-current={view === "book" ? "page" : undefined}
             className={tab("book")}
           >
-            Book
+            Make a Booking
           </button>
           <button
             type="button"
