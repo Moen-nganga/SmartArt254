@@ -3,12 +3,13 @@ import type { ChangeEvent } from "react";
 import Footer from "../components/Footer";
 import FeatureList from "../components/FeatureList";
 import AdminBookings from "../components/AdminBookings";
+import MyBookings from "../components/MyBookings";
 import { eventOffers, needOptions, schoolOffers, workshopOffers } from "../data";
 import { getUser, signOut } from "../auth";
 import type { User } from "../auth";
 import { link } from "../navigate";
 
-type View = "welcome" | "services" | "book" | "bookings";
+type View = "welcome" | "services" | "book" | "mybookings" | "bookings";
 
 interface FormState {
   name: string;
@@ -354,6 +355,14 @@ export default function Member() {
           >
             Book
           </button>
+          <button
+            type="button"
+            onClick={() => show("mybookings")}
+            aria-current={view === "mybookings" ? "page" : undefined}
+            className={tab("mybookings")}
+          >
+            Bookings made
+          </button>
           {user?.isAdmin && (
             <button
               type="button"
@@ -374,6 +383,8 @@ export default function Member() {
           <Welcome user={user} onNavigate={show} onSignOut={handleSignOut} />
         ) : view === "services" ? (
           <Services />
+        ) : view === "mybookings" ? (
+          <MyBookings onBook={() => show("book")} />
         ) : view === "bookings" && user.isAdmin ? (
           <AdminBookings />
         ) : (

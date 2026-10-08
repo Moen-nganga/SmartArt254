@@ -27,6 +27,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(201).json({ ok: true });
     }
 
+    if (req.method === "GET" && req.query.mine !== undefined) {
+      const mine = await sql`
+        SELECT id, name, email, phone, activity,
+               event_type AS "eventType",
+               to_char(event_date, 'YYYY-MM-DD') AS "eventDate",
+               guests, message, status,
+               created_at AS "createdAt"
+        FROM bookings
+        WHERE user_id = ${userId}
+        ORDER BY created_at DESC
+      `;
+      return res.status(200).json({ bookings: mine });
+    }
+
+    if (req.method === "DELETE") {
+      const id = Number(req.query.id);
+      if (!id) return res.status(400).json({ error: "Invalid booking." });
+      const rows = await sql`
+        DELETE FROM bookings
+        WHERE id = ${id}
+          AND (user_id = ${userId} OR EXISTS (SELECT 1 FROM users WHERE id = ${userId} AND is_admin = TRUE))
+        RETURNING id
+      `;
+      if (!rows.length) return res.status(404).json({ error: "Booking not found." });
+      return res.status(200).json({ ok: true });
+    }
+
     const admins = await sql`SELECT is_admin FROM users WHERE id = ${userId}`;
     if (!admins.length || !admins[0].is_admin) {
       return res.status(403).json({ error: "Only admins can view bookings." });
@@ -53,14 +80,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const rows = await sql`UPDATE bookings SET status = ${status} WHERE id = ${Number(id)} RETURNING id, status`;
       if (!rows.length) return res.status(404).json({ error: "Booking not found." });
       return res.status(200).json({ booking: rows[0] });
-    }
-
-    if (req.method === "DELETE") {
-      const id = Number(req.query.id);
-      if (!id) return res.status(400).json({ error: "Invalid booking." });
-      const rows = await sql`DELETE FROM bookings WHERE id = ${id} RETURNING id`;
-      if (!rows.length) return res.status(404).json({ error: "Booking not found." });
-      return res.status(200).json({ ok: true });
     }
 
     res.setHeader("Allow", "GET, POST, PATCH, DELETE");

@@ -123,9 +123,6 @@ export default function SignIn() {
                 Create an account
               </a>
             </span>
-            <a href="/forgot-password" onClick={link("/forgot-password")} className="hover:text-pink hover:underline">
-              Forgot password?
-            </a>
           </div>
         </div>
       </section>
