@@ -8,6 +8,7 @@ const items = [
   { label: "Schools", path: "/schools" },
   { label: "Workshops", path: "/workshops" },
   { label: "Events", path: "/events" },
+  { label: "Blog", path: "/blog" },
   { label: "Book", path: "/book" },
 ];
 
