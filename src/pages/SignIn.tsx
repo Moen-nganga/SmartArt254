@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import Layout from "../components/Layout";
 import { link } from "../navigate";
-import { nextPath, signIn } from "../auth";
+import { isValidPhone, nextPath, signIn } from "../auth";
+
+type Method = "email" | "phone";
 
 function GoogleIcon() {
   return (
@@ -16,7 +18,9 @@ function GoogleIcon() {
 }
 
 export default function SignIn() {
+  const [method, setMethod] = useState<Method>("email");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,11 +32,20 @@ export default function SignIn() {
     }
   }, []);
 
+  function chooseMethod(next: Method) {
+    setMethod(next);
+    setError("");
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    if (method === "phone" && !isValidPhone(phone)) {
+      setError("Enter a valid phone number with at least 10 digits.");
+      return;
+    }
     setLoading(true);
-    const { ok, data } = await signIn(email, password);
+    const { ok, data } = await signIn(method === "phone" ? { phone } : { email }, password);
     setLoading(false);
     if (!ok) {
       setError(data.error ?? "Could not sign in. Please try again.");
@@ -47,6 +60,11 @@ export default function SignIn() {
 
   const field =
     "w-full rounded-full border-2 border-ink/20 bg-white px-6 py-4 text-lg font-semibold text-ink placeholder:text-ink/40 focus:border-royal focus:outline-none focus:ring-2 focus:ring-royal/30";
+
+  const tab = (value: Method) =>
+    `flex-1 rounded-full px-4 py-2.5 text-base font-bold transition focus:outline-none focus:ring-2 focus:ring-royal/40 ${
+      method === value ? "bg-ink text-white" : "text-ink hover:bg-mist"
+    }`;
 
   return (
     <Layout>
@@ -70,8 +88,17 @@ export default function SignIn() {
 
           <div className="my-7 flex items-center gap-4 text-base font-semibold text-ink/60">
             <span className="h-px flex-1 bg-ink/20" />
-            or use your email
+            or use your email or phone
             <span className="h-px flex-1 bg-ink/20" />
+          </div>
+
+          <div className="mb-5 flex gap-2 rounded-full border-2 border-ink/20 bg-white p-1">
+            <button type="button" aria-pressed={method === "email"} onClick={() => chooseMethod("email")} className={tab("email")}>
+              Email
+            </button>
+            <button type="button" aria-pressed={method === "phone"} onClick={() => chooseMethod("phone")} className={tab("phone")}>
+              Phone
+            </button>
           </div>
 
           {error && (
@@ -81,19 +108,39 @@ export default function SignIn() {
           )}
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <label className="sr-only" htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={field}
-              required
-            />
+            {method === "email" ? (
+              <>
+                <label className="sr-only" htmlFor="email">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={field}
+                  required
+                />
+              </>
+            ) : (
+              <>
+                <label className="sr-only" htmlFor="phone">
+                  Phone number
+                </label>
+                <input
+                  id="phone"
+                  type="tel"
+                  autoComplete="tel"
+                  placeholder="0712 345 678"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className={field}
+                  required
+                />
+              </>
+            )}
             <label className="sr-only" htmlFor="password">
               Password
             </label>

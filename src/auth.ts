@@ -1,8 +1,14 @@
 export interface User {
   id: number;
   name: string;
-  email: string;
+  email: string | null;
+  phone: string | null;
   isAdmin: boolean;
+}
+
+export interface Credentials {
+  email?: string;
+  phone?: string;
 }
 
 async function call(action: string, body?: object) {
@@ -21,15 +27,22 @@ async function call(action: string, body?: object) {
 
 export async function getUser(): Promise<User | null> {
   const { ok, data } = await call("me");
-  return ok ? data.user : null;
+  return ok && data.user ? data.user : null;
 }
 
-export function signIn(email: string, password: string) {
-  return call("signin", { email, password });
+export function isValidPhone(value: string) {
+  const trimmed = value.trim();
+  if (!/^\+?[\d\s\-().]+$/.test(trimmed)) return false;
+  const digits = trimmed.replace(/\D/g, "");
+  return digits.length >= 10 && digits.length <= 15;
 }
 
-export function signUp(name: string, email: string, password: string) {
-  return call("signup", { name, email, password });
+export function signIn(credentials: Credentials, password: string) {
+  return call("signin", { ...credentials, password });
+}
+
+export function signUp(name: string, credentials: Credentials, password: string) {
+  return call("signup", { name, ...credentials, password });
 }
 
 export async function signOut() {

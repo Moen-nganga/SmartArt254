@@ -81,7 +81,7 @@ function Welcome({
           <div>
             <p className="text-sm font-semibold uppercase tracking-widest text-ink/70">Signed in as</p>
             <p className="mt-1 text-xl font-bold">{user.name}</p>
-            <p className="text-base text-ink/80">{user.email}</p>
+            <p className="text-base text-ink/80">{user.email ?? user.phone}</p>
           </div>
           <button
             type="button"
@@ -127,8 +127,8 @@ function Services() {
 function BookingForm({ user }: { user: User }) {
   const blank: FormState = {
     name: user.name,
-    email: user.email,
-    phone: "",
+    email: user.email ?? "",
+    phone: user.phone ?? "",
     activity: needOptions[0],
     eventType: eventTypeOptions[0],
     eventDate: "",
