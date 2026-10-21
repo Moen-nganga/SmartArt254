@@ -44,7 +44,7 @@ export default function Book() {
         window.location.href = "/signin?next=/book";
         return;
       }
-      setForm((f) => ({ ...f, name: user.name, email: user.email }));
+      setForm((f) => ({ ...f, name: user.name, email: user.email ?? "", phone: user.phone ?? "" }));
       setChecking(false);
     });
   }, []);
