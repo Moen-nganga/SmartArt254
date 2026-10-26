@@ -4,12 +4,13 @@ import Footer from "../components/Footer";
 import FeatureList from "../components/FeatureList";
 import AdminBookings from "../components/AdminBookings";
 import MyBookings from "../components/MyBookings";
+import Chat from "../components/Chat";
 import { eventOffers, needOptions, schoolOffers, workshopOffers } from "../data";
 import { getUser, signOut } from "../auth";
 import type { User } from "../auth";
 import { link } from "../navigate";
 
-type View = "welcome" | "services" | "book" | "mybookings" | "bookings";
+type View = "welcome" | "services" | "book" | "mybookings" | "bookings" | "chat";
 
 interface FormState {
   name: string;
@@ -72,6 +73,13 @@ function Welcome({
             className="rounded-full border-2 border-ink px-9 py-4 text-xl font-bold text-ink transition hover:bg-ink hover:text-white"
           >
             Browse services
+          </button>
+          <button
+            type="button"
+            onClick={() => onNavigate("chat")}
+            className="rounded-full border-2 border-royal px-9 py-4 text-xl font-bold text-royal transition hover:bg-royal hover:text-white"
+          >
+            {user.isAdmin ? "Talk to a user" : "Talk to a host"}
           </button>
         </div>
       </section>
@@ -363,6 +371,16 @@ export default function Member() {
           >
             Bookings made
           </button>
+          {user && (
+            <button
+              type="button"
+              onClick={() => show("chat")}
+              aria-current={view === "chat" ? "page" : undefined}
+              className={tab("chat")}
+            >
+              {user.isAdmin ? "Talk to a user" : "Talk to a host"}
+            </button>
+          )}
           {user?.isAdmin && (
             <button
               type="button"
@@ -385,6 +403,8 @@ export default function Member() {
           <Services />
         ) : view === "mybookings" ? (
           <MyBookings onBook={() => show("book")} />
+        ) : view === "chat" ? (
+          <Chat user={user} />
         ) : view === "bookings" && user.isAdmin ? (
           <AdminBookings />
         ) : (
