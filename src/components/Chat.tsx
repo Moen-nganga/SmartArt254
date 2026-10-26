@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import type { User } from "../auth";
-import { decryptMessage, encryptMessage, ensureIdentity } from "../crypto";
-import type { Identity, IncomingMessage, Recipient } from "../crypto";
 
-interface ApiMessage extends IncomingMessage {
+interface ApiMessage {
   id: number;
   senderId: number;
   senderName?: string;
+  text: string | null;
   createdAt: string;
 }
 
@@ -29,9 +28,6 @@ interface ConversationItem {
   at: string;
 }
 
-const KEY_REFRESH_MS = 30000;
-const keyCache = new Map<number, { at: number; keys: Recipient[] }>();
-
 async function api(query: string, init?: RequestInit) {
   const res = await fetch(`/api/messages?${query}`, init);
   const data = await res.json().catch(() => ({}));
@@ -51,20 +47,6 @@ function post(action: string, body: object) {
   });
 }
 
-async function loadKeys(memberId: number) {
-  const data = await api(`action=keys&memberId=${memberId}`);
-  const keys: Recipient[] = data.keys;
-  keyCache.set(memberId, { at: Date.now(), keys });
-  return keys;
-}
-
-async function getKeys(memberId: number, force = false) {
-  const cached = keyCache.get(memberId);
-  if (!cached || force) return loadKeys(memberId);
-  if (Date.now() - cached.at > KEY_REFRESH_MS) loadKeys(memberId).catch(() => {});
-  return cached.keys;
-}
-
 function clock(value: string) {
   return new Date(value).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
@@ -78,7 +60,6 @@ function stamp(value: string) {
 
 function Thread({
   user,
-  identity,
   memberId,
   heading,
   subheading,
@@ -86,7 +67,6 @@ function Thread({
   onSent,
 }: {
   user: User;
-  identity: Identity;
   memberId: number;
   heading: string;
   subheading?: string;
@@ -112,7 +92,6 @@ function Thread({
     setLoaded(false);
     setError("");
     queue.current = Promise.resolve();
-    getKeys(memberId).catch(() => {});
 
     const tick = async () => {
       if (busy) return;
@@ -122,16 +101,13 @@ function Thread({
         const incoming: ApiMessage[] = data.messages;
         if (!active) return;
         if (incoming.length) {
-          const decoded: ChatMessage[] = await Promise.all(
-            incoming.map(async (m) => ({
-              id: m.id,
-              mine: m.senderId === user.id,
-              sender: m.senderName ?? "",
-              text: await decryptMessage(identity, m),
-              at: m.createdAt,
-            })),
-          );
-          if (!active) return;
+          const decoded: ChatMessage[] = incoming.map((m) => ({
+            id: m.id,
+            mine: m.senderId === user.id,
+            sender: m.senderName ?? "",
+            text: m.text,
+            at: m.createdAt,
+          }));
           lastId = incoming[incoming.length - 1].id;
           activeUntil.current = Date.now() + 30000;
           setMessages((prev) => {
@@ -177,15 +153,12 @@ function Thread({
       document.removeEventListener("visibilitychange", wake);
       window.removeEventListener("focus", wake);
     };
-  }, [memberId, user.id, identity]);
+  }, [memberId, user.id]);
 
   useEffect(() => {
     const el = list.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages.length, loaded]);
-
-  const reachable = (keys: Recipient[]) =>
-    user.isAdmin ? keys.some((k) => k.userId === memberId) : keys.some((k) => k.userId !== memberId);
 
   const fail = (temp: number, body: string, message: string) => {
     setMessages((prev) => prev.filter((m) => m.id !== temp));
@@ -195,24 +168,7 @@ function Thread({
 
   const deliver = async (temp: number, body: string) => {
     try {
-      let keys = await getKeys(memberId);
-      if (!reachable(keys)) keys = await getKeys(memberId, true);
-      if (!reachable(keys)) {
-        fail(
-          temp,
-          body,
-          user.isAdmin
-            ? "This user has not opened their chat yet, so the message cannot be encrypted for them."
-            : "No host has opened the chat yet. Please use WhatsApp or the booking form for now.",
-        );
-        return;
-      }
-      const recipients: Recipient[] = [
-        ...keys.filter((k) => k.userId !== user.id),
-        { userId: user.id, publicKey: identity.publicKey },
-      ];
-      const payload = await encryptMessage(identity, body, recipients);
-      const data = await post("send", { memberId, ...payload });
+      const data = await post("send", { memberId, text: body });
       setMessages((prev) =>
         prev.some((m) => m.id === data.id)
           ? prev.filter((m) => m.id !== temp)
@@ -284,7 +240,7 @@ function Thread({
                   <p className="text-sm font-bold text-royal">{user.isAdmin ? m.sender : "Host"}</p>
                 )}
                 {m.text === null ? (
-                  <p className="text-base italic opacity-80">This message cannot be read on this device.</p>
+                  <p className="text-base italic opacity-80">This message could not be loaded.</p>
                 ) : (
                   <p className="whitespace-pre-wrap break-words text-base font-semibold">{m.text}</p>
                 )}
@@ -327,7 +283,7 @@ function Thread({
   );
 }
 
-function AdminChat({ user, identity }: { user: User; identity: Identity }) {
+function AdminChat({ user }: { user: User }) {
   const [items, setItems] = useState<ConversationItem[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -339,21 +295,24 @@ function AdminChat({ user, identity }: { user: User; identity: Identity }) {
       if (document.hidden && version > 0) return;
       try {
         const data = await api("action=conversations");
-        const next: ConversationItem[] = await Promise.all(
-          data.conversations.map(
-            async (c: { memberId: number; name: string; email: string | null; phone: string | null; last: ApiMessage }) => {
-              const text = await decryptMessage(identity, c.last);
-              const body = text ?? "Encrypted message";
-              return {
-                memberId: c.memberId,
-                name: c.name,
-                email: c.email,
-                phone: c.phone,
-                preview: c.last.senderId === user.id ? `You: ${body}` : body,
-                at: c.last.createdAt,
-              };
-            },
-          ),
+        const next: ConversationItem[] = data.conversations.map(
+          (c: {
+            memberId: number;
+            name: string;
+            email: string | null;
+            phone: string | null;
+            last: { senderId: number; text: string | null; createdAt: string };
+          }) => {
+            const body = c.last.text ?? "Message could not be loaded";
+            return {
+              memberId: c.memberId,
+              name: c.name,
+              email: c.email,
+              phone: c.phone,
+              preview: c.last.senderId === user.id ? `You: ${body}` : body,
+              at: c.last.createdAt,
+            };
+          },
         );
         if (active) setItems(next);
       } catch {
@@ -368,7 +327,7 @@ function AdminChat({ user, identity }: { user: User; identity: Identity }) {
       active = false;
       window.clearInterval(timer);
     };
-  }, [identity, user.id, version]);
+  }, [user.id, version]);
 
   const current = items.find((i) => i.memberId === selected) ?? null;
 
@@ -427,7 +386,6 @@ function AdminChat({ user, identity }: { user: User; identity: Identity }) {
           <Thread
             key={selected}
             user={user}
-            identity={identity}
             memberId={selected}
             heading={current.name}
             subheading={current.email ?? current.phone ?? undefined}
@@ -441,24 +399,6 @@ function AdminChat({ user, identity }: { user: User; identity: Identity }) {
 }
 
 export default function Chat({ user }: { user: User }) {
-  const [identity, setIdentity] = useState<Identity | null>(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    let active = true;
-    ensureIdentity(user.id)
-      .then(async (found) => {
-        await post("key", { publicKey: found.publicKey });
-        if (active) setIdentity(found);
-      })
-      .catch(() => {
-        if (active) setError("Secure chat could not start in this browser. Please try another browser.");
-      });
-    return () => {
-      active = false;
-    };
-  }, [user.id]);
-
   return (
     <section className="mx-auto w-full max-w-5xl px-5 py-12 sm:px-10 sm:py-16">
       <h1 className="text-4xl font-extrabold leading-tight sm:text-6xl">
@@ -466,27 +406,15 @@ export default function Chat({ user }: { user: User }) {
       </h1>
       <p className="mt-3 max-w-2xl text-lg text-ink/80 sm:text-xl">
         {user.isAdmin
-          ? "Messages from members appear here. They are end-to-end encrypted and can only be read in this browser."
-          : "Message our team directly. Your messages are end-to-end encrypted, so only you and our hosts can read them."}
+          ? "Messages from members appear here. They are stored encrypted and only admins can read them."
+          : "Message our team directly. Your messages are stored encrypted, so only you and our hosts can read them."}
       </p>
 
       <div className="mt-8 h-[70vh] min-h-[26rem] overflow-hidden rounded-3xl border border-ink/10 bg-white/80 shadow-xl backdrop-blur-sm">
-        {error ? (
-          <p role="alert" className="m-6 rounded-xl bg-pink px-4 py-3 font-semibold text-white">
-            {error}
-          </p>
-        ) : !identity ? (
-          <p className="p-6 text-lg font-semibold">Setting up secure chat</p>
-        ) : user.isAdmin ? (
-          <AdminChat user={user} identity={identity} />
+        {user.isAdmin ? (
+          <AdminChat user={user} />
         ) : (
-          <Thread
-            user={user}
-            identity={identity}
-            memberId={user.id}
-            heading="SmartArt254 hosts"
-            subheading="End-to-end encrypted"
-          />
+          <Thread user={user} memberId={user.id} heading="SmartArt254 hosts" subheading="Private conversation" />
         )}
       </div>
     </section>

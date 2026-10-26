@@ -46,20 +46,27 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id TEXT UNIQUE;
 ALTER TABLE users ALTER COLUMN email DROP NOT NULL;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT UNIQUE;
 
-CREATE TABLE IF NOT EXISTS user_keys (
-  user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-  public_key TEXT NOT NULL,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+DROP TABLE IF EXISTS user_keys;
+DROP TABLE IF EXISTS host_key;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = current_schema()
+      AND table_name = 'messages'
+      AND column_name = 'ciphertext'
+  ) THEN
+    DROP TABLE messages;
+  END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS messages (
   id SERIAL PRIMARY KEY,
   member_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  sender_key TEXT NOT NULL,
   iv TEXT NOT NULL,
-  ciphertext TEXT NOT NULL,
-  wrapped JSONB NOT NULL,
+  body TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
