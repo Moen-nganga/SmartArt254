@@ -1,12 +1,25 @@
 import { useEffect, useRef, useState } from "react";
-import type { KeyboardEvent } from "react";
+import type { ChangeEvent, KeyboardEvent } from "react";
+import { upload } from "@vercel/blob/client";
 import type { User } from "../auth";
+
+const MAX_BYTES = 100 * 1024 * 1024;
+const ACCEPT = "image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime";
+const ALLOWED = ACCEPT.split(",");
+
+interface Attachment {
+  url: string;
+  type: string;
+  name: string;
+  size: number;
+}
 
 interface ApiMessage {
   id: number;
   senderId: number;
   senderName?: string;
   text: string | null;
+  attachment: Attachment | null;
   createdAt: string;
 }
 
@@ -15,8 +28,14 @@ interface ChatMessage {
   mine: boolean;
   sender: string;
   text: string | null;
+  attachment: Attachment | null;
   at: string;
   pending?: boolean;
+}
+
+interface Picked {
+  file: File;
+  preview: string;
 }
 
 interface ConversationItem {
@@ -58,6 +77,41 @@ function stamp(value: string) {
     : date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
+function sizeLabel(bytes: number) {
+  return bytes >= 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+function safeName(name: string) {
+  const cleaned = name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-80);
+  return cleaned || "file";
+}
+
+function Media({ attachment, onLoad }: { attachment: Attachment; onLoad: () => void }) {
+  if (attachment.type.startsWith("video/")) {
+    return (
+      <video
+        src={attachment.url}
+        controls
+        preload="metadata"
+        playsInline
+        onLoadedMetadata={onLoad}
+        className="max-h-72 w-full rounded-xl bg-black"
+      />
+    );
+  }
+  return (
+    <a href={attachment.url} target="_blank" rel="noreferrer">
+      <img
+        src={attachment.url}
+        alt={attachment.name}
+        loading="lazy"
+        onLoad={onLoad}
+        className="max-h-72 w-full rounded-xl object-cover"
+      />
+    </a>
+  );
+}
+
 function Thread({
   user,
   memberId,
@@ -75,9 +129,12 @@ function Thread({
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
+  const [picked, setPicked] = useState<Picked | null>(null);
+  const [progress, setProgress] = useState<{ id: number; percent: number } | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
   const list = useRef<HTMLDivElement>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
   const queue = useRef<Promise<void>>(Promise.resolve());
   const tempId = useRef(0);
   const poll = useRef<() => void>(() => {});
@@ -106,6 +163,7 @@ function Thread({
             mine: m.senderId === user.id,
             sender: m.senderName ?? "",
             text: m.text,
+            attachment: m.attachment,
             at: m.createdAt,
           }));
           lastId = incoming[incoming.length - 1].id;
@@ -155,44 +213,119 @@ function Thread({
     };
   }, [memberId, user.id]);
 
-  useEffect(() => {
+  const scrollDown = () => {
     const el = list.current;
     if (el) el.scrollTop = el.scrollHeight;
+  };
+
+  useEffect(() => {
+    scrollDown();
   }, [messages.length, loaded]);
 
-  const fail = (temp: number, body: string, message: string) => {
+  const onPick = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!ALLOWED.includes(file.type)) {
+      setError("Only photos (JPG, PNG, GIF, WebP) and videos (MP4, WebM, MOV) can be sent.");
+      return;
+    }
+    if (file.size > MAX_BYTES) {
+      setError("Files must be 100 MB or smaller.");
+      return;
+    }
+    setError("");
+    setPicked((prev) => {
+      if (prev) URL.revokeObjectURL(prev.preview);
+      return { file, preview: URL.createObjectURL(file) };
+    });
+  };
+
+  const clearPicked = () => {
+    setPicked((prev) => {
+      if (prev) URL.revokeObjectURL(prev.preview);
+      return null;
+    });
+  };
+
+  const fail = (temp: number, body: string, current: Picked | null, message: string) => {
     setMessages((prev) => prev.filter((m) => m.id !== temp));
     setText((prev) => prev || body);
+    if (current) {
+      setPicked((prev) => {
+        if (prev) {
+          URL.revokeObjectURL(current.preview);
+          return prev;
+        }
+        return current;
+      });
+    }
     setError(message);
   };
 
-  const deliver = async (temp: number, body: string) => {
+  const deliver = async (temp: number, body: string, current: Picked | null) => {
     try {
-      const data = await post("send", { memberId, text: body });
+      let attachment: Attachment | null = null;
+      if (current) {
+        setProgress({ id: temp, percent: 0 });
+        const blob = await upload(`chat/${user.id}/${safeName(current.file.name)}`, current.file, {
+          access: "public",
+          handleUploadUrl: "/api/upload",
+          contentType: current.file.type,
+          multipart: current.file.size > 8 * 1024 * 1024,
+          onUploadProgress: ({ percentage }) => setProgress({ id: temp, percent: Math.round(percentage) }),
+        });
+        attachment = {
+          url: blob.url,
+          type: current.file.type,
+          name: current.file.name,
+          size: current.file.size,
+        };
+      }
+      const data = await post("send", {
+        memberId,
+        text: body,
+        attachment: attachment ? { url: attachment.url, name: attachment.name } : undefined,
+      });
+      setProgress(null);
       setMessages((prev) =>
         prev.some((m) => m.id === data.id)
           ? prev.filter((m) => m.id !== temp)
-          : prev.map((m) => (m.id === temp ? { ...m, id: data.id, pending: false } : m)),
+          : prev.map((m) => (m.id === temp ? { ...m, id: data.id, pending: false, attachment } : m)),
       );
+      if (current) URL.revokeObjectURL(current.preview);
       poll.current();
       onSent?.();
     } catch (e) {
-      fail(temp, body, e instanceof Error ? e.message : "Could not send your message.");
+      setProgress(null);
+      fail(temp, body, current, e instanceof Error ? e.message : "Could not send your message.");
     }
   };
 
   const send = () => {
     const body = text.trim();
-    if (!body) return;
+    const current = picked;
+    if (!body && !current) return;
     const temp = --tempId.current;
     activeUntil.current = Date.now() + 30000;
     setText("");
     setError("");
+    setPicked(null);
     setMessages((prev) => [
       ...prev,
-      { id: temp, mine: true, sender: "", text: body, at: new Date().toISOString(), pending: true },
+      {
+        id: temp,
+        mine: true,
+        sender: "",
+        text: body,
+        attachment: current
+          ? { url: current.preview, type: current.file.type, name: current.file.name, size: current.file.size }
+          : null,
+        at: new Date().toISOString(),
+        pending: true,
+      },
     ]);
-    queue.current = queue.current.then(() => deliver(temp, body));
+    queue.current = queue.current.then(() => deliver(temp, body, current));
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -239,13 +372,22 @@ function Thread({
                 {!m.mine && (
                   <p className="text-sm font-bold text-royal">{user.isAdmin ? m.sender : "Host"}</p>
                 )}
+                {m.attachment && (
+                  <div className={`w-60 max-w-full sm:w-72 ${m.text ? "mb-2" : ""}`}>
+                    <Media attachment={m.attachment} onLoad={scrollDown} />
+                  </div>
+                )}
                 {m.text === null ? (
                   <p className="text-base italic opacity-80">This message could not be loaded.</p>
                 ) : (
-                  <p className="whitespace-pre-wrap break-words text-base font-semibold">{m.text}</p>
+                  m.text && <p className="whitespace-pre-wrap break-words text-base font-semibold">{m.text}</p>
                 )}
                 <p className={`mt-1 text-right text-xs font-semibold ${m.mine ? "text-white/80" : "text-ink/60"}`}>
-                  {m.pending ? "Sending" : clock(m.at)}
+                  {m.pending
+                    ? progress && progress.id === m.id
+                      ? `Uploading ${progress.percent}%`
+                      : "Sending"
+                    : clock(m.at)}
                 </p>
               </div>
             </div>
@@ -259,25 +401,74 @@ function Thread({
         </p>
       )}
 
-      <div className="flex items-end gap-3 border-t border-ink/10 px-4 py-4 sm:px-6">
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={onKeyDown}
-          rows={1}
-          maxLength={2000}
-          aria-label="Message"
-          placeholder="Type a message"
-          className="max-h-32 min-h-[3rem] flex-1 resize-none rounded-2xl border-2 border-ink/20 bg-white px-4 py-2.5 text-base font-semibold text-ink placeholder:text-ink/40 focus:border-royal focus:outline-none focus:ring-2 focus:ring-royal/30"
-        />
-        <button
-          type="button"
-          onClick={send}
-          disabled={!text.trim()}
-          className="rounded-full bg-sun px-6 py-3 text-base font-bold text-ink transition hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-royal/60 disabled:opacity-50"
-        >
-          Send
-        </button>
+      <div className="border-t border-ink/10 px-4 py-4 sm:px-6">
+        {picked && (
+          <div className="mb-3 flex items-center gap-3 rounded-2xl bg-ink/5 p-2">
+            {picked.file.type.startsWith("video/") ? (
+              <video
+                src={`${picked.preview}#t=0.1`}
+                muted
+                playsInline
+                preload="metadata"
+                className="h-14 w-14 shrink-0 rounded-xl bg-black object-cover"
+              />
+            ) : (
+              <img src={picked.preview} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-bold">{picked.file.name}</p>
+              <p className="text-xs font-semibold text-ink/70">{sizeLabel(picked.file.size)}</p>
+            </div>
+            <button
+              type="button"
+              onClick={clearPicked}
+              aria-label="Remove attachment"
+              className="rounded-full border-2 border-ink px-3 py-1 text-sm font-bold text-ink transition hover:bg-ink/5"
+            >
+              Remove
+            </button>
+          </div>
+        )}
+        <div className="flex items-end gap-3">
+          <input ref={fileInput} type="file" accept={ACCEPT} onChange={onPick} className="hidden" />
+          <button
+            type="button"
+            onClick={() => fileInput.current?.click()}
+            aria-label="Attach a photo or video"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-ink/20 text-ink transition hover:border-royal hover:text-royal focus:outline-none focus:ring-2 focus:ring-royal/60"
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+            </svg>
+          </button>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={onKeyDown}
+            rows={1}
+            maxLength={2000}
+            aria-label="Message"
+            placeholder="Type a message"
+            className="max-h-32 min-h-[3rem] flex-1 resize-none rounded-2xl border-2 border-ink/20 bg-white px-4 py-2.5 text-base font-semibold text-ink placeholder:text-ink/40 focus:border-royal focus:outline-none focus:ring-2 focus:ring-royal/30"
+          />
+          <button
+            type="button"
+            onClick={send}
+            disabled={!text.trim() && !picked}
+            className="rounded-full bg-sun px-6 py-3 text-base font-bold text-ink transition hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-royal/60 disabled:opacity-50"
+          >
+            Send
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -301,9 +492,14 @@ function AdminChat({ user }: { user: User }) {
             name: string;
             email: string | null;
             phone: string | null;
-            last: { senderId: number; text: string | null; createdAt: string };
+            last: { senderId: number; text: string | null; attachmentType: string | null; createdAt: string };
           }) => {
-            const body = c.last.text ?? "Message could not be loaded";
+            const media = c.last.attachmentType
+              ? c.last.attachmentType.startsWith("video/")
+                ? "Video"
+                : "Photo"
+              : null;
+            const body = c.last.text || media || (c.last.text === null ? "Message could not be loaded" : "");
             return {
               memberId: c.memberId,
               name: c.name,

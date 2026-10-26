@@ -1,9 +1,20 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
+import { head } from "@vercel/blob";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getUserId } from "./_session.js";
 
 const MAX_TEXT = 2000;
+const MAX_BYTES = 100 * 1024 * 1024;
+const ALLOWED_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+]);
 
 const sql = neon(process.env.DATABASE_URL as string);
 
@@ -37,6 +48,38 @@ function toId(value: unknown) {
   return Number.isInteger(n) && n > 0 ? n : null;
 }
 
+async function verifyAttachment(raw: unknown, userId: number) {
+  if (!raw || typeof raw !== "object") return null;
+  const { url, name } = raw as { url?: unknown; name?: unknown };
+  if (typeof url !== "string") return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== "https:" || !parsed.hostname.endsWith(".blob.vercel-storage.com")) return null;
+  try {
+    const info = await head(url);
+    if (!info.pathname.startsWith(`chat/${userId}/`)) return null;
+    if (!ALLOWED_TYPES.has(info.contentType) || info.size > MAX_BYTES) return null;
+    const label = typeof name === "string" && name.trim() ? name.trim().slice(0, 120) : "file";
+    return { url: info.url, type: info.contentType, name: label, size: info.size };
+  } catch {
+    return null;
+  }
+}
+
+function packAttachment(r: Record<string, any>) {
+  if (!r.attachmentUrl) return null;
+  return {
+    url: r.attachmentUrl as string,
+    type: r.attachmentType as string,
+    name: (r.attachmentName as string | null) ?? "file",
+    size: Number(r.attachmentSize) || 0,
+  };
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const userId = getUserId(req);
   if (!userId) {
@@ -62,6 +105,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           m.sender_id AS "senderId",
           m.iv,
           m.body,
+          m.attachment_type AS "attachmentType",
           m.created_at AS "createdAt"
         FROM messages m
         JOIN users u ON u.id = m.member_id
@@ -77,6 +121,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             id: r.id,
             senderId: r.senderId,
             text: open(r.iv, r.body),
+            attachmentType: r.attachmentType as string | null,
             createdAt: r.createdAt,
           },
         }))
@@ -99,6 +144,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                u.name AS "senderName",
                m.iv,
                m.body,
+               m.attachment_url AS "attachmentUrl",
+               m.attachment_type AS "attachmentType",
+               m.attachment_name AS "attachmentName",
+               m.attachment_size AS "attachmentSize",
                m.created_at AS "createdAt"
         FROM messages m
         JOIN users u ON u.id = m.sender_id
@@ -111,23 +160,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         senderId: r.senderId,
         senderName: r.senderName,
         text: open(r.iv, r.body),
+        attachment: packAttachment(r),
         createdAt: r.createdAt,
       }));
       return res.status(200).json({ messages });
     }
 
     if (action === "send" && req.method === "POST") {
-      const { memberId: bodyMember, text } = req.body ?? {};
+      const { memberId: bodyMember, text, attachment: bodyAttachment } = req.body ?? {};
       const clean = typeof text === "string" ? text.trim() : "";
-      if (!clean || clean.length > MAX_TEXT) {
+      const hasAttachment = bodyAttachment !== undefined && bodyAttachment !== null;
+      const attachment = hasAttachment ? await verifyAttachment(bodyAttachment, userId) : null;
+      if (hasAttachment && !attachment) {
+        return res.status(400).json({ error: "Invalid attachment." });
+      }
+      if (clean.length > MAX_TEXT || (!clean && !attachment)) {
         return res.status(400).json({ error: "Invalid message." });
       }
 
       const requested = toId(bodyMember);
       const sealed = seal(clean);
       const rows = await sql`
-        INSERT INTO messages (member_id, sender_id, iv, body)
-        SELECT t.id, me.id, ${sealed.iv}::text, ${sealed.body}::text
+        INSERT INTO messages (member_id, sender_id, iv, body, attachment_url, attachment_type, attachment_name, attachment_size)
+        SELECT t.id, me.id, ${sealed.iv}::text, ${sealed.body}::text,
+               ${attachment?.url ?? null}::text,
+               ${attachment?.type ?? null}::text,
+               ${attachment?.name ?? null}::text,
+               ${attachment?.size ?? null}::int
         FROM users me
         JOIN users t ON t.id = CASE WHEN me.is_admin THEN ${requested}::int ELSE me.id END
         WHERE me.id = ${userId}
