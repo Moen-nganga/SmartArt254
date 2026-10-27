@@ -1,7 +1,8 @@
 import { neon } from "@neondatabase/serverless";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { makeCookie } from "../_session.js";
+import { makeCookie, makeToken } from "../_session.js";
 
+const APP_SCHEME = "com.smartart254.app";
 const clearState = "g_state=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0";
 
 function readCookie(req: VercelRequest, name: string) {
@@ -12,9 +13,21 @@ function readCookie(req: VercelRequest, name: string) {
   return found ? found.slice(name.length + 1) : null;
 }
 
+function backToApp(res: VercelResponse, query: string) {
+  const url = `${APP_SCHEME}://auth?${query}`;
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Cache-Control", "no-store");
+  return res.status(200).send(
+    `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Returning to SmartArt254</title></head><body style="font-family:sans-serif;text-align:center;padding:48px 24px"><p>Returning to the app...</p><p><a href="${url}" style="display:inline-block;padding:14px 28px;background:#111;color:#fff;border-radius:8px;text-decoration:none">Open SmartArt254</a></p><script>window.location.href=${JSON.stringify(url)};</script></body></html>`
+  );
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  let fromApp = false;
+
   const fail = () => {
     res.setHeader("Set-Cookie", clearState);
+    if (fromApp) return backToApp(res, "error=google");
     return res.redirect(302, "/signin?error=google");
   };
 
@@ -24,7 +37,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const stored = readCookie(req, "g_state");
     if (!code || !state || !stored) return fail();
 
-    const [savedState, encodedNext] = stored.split(".");
+    const [savedState, encodedNext, mode] = stored.split(".");
+    fromApp = mode === "app";
     if (savedState !== state) return fail();
 
     const decodedNext = Buffer.from(encodedNext ?? "", "base64url").toString();
@@ -76,6 +90,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         `;
         userId = created[0].id;
       }
+    }
+
+    if (fromApp) {
+      res.setHeader("Set-Cookie", clearState);
+      return backToApp(res, `token=${encodeURIComponent(makeToken(userId))}`);
     }
 
     res.setHeader("Set-Cookie", [makeCookie(userId), clearState]);

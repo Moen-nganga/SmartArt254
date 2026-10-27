@@ -4,8 +4,9 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 export default function handler(req: VercelRequest, res: VercelResponse) {
   const rawNext = String(req.query.next ?? "/");
   const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
+  const mode = req.query.app === "1" ? "app" : "web";
   const state = randomBytes(16).toString("hex");
-  const cookieValue = `${state}.${Buffer.from(next).toString("base64url")}`;
+  const cookieValue = `${state}.${Buffer.from(next).toString("base64url")}.${mode}`;
 
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID as string,

@@ -1,7 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { clearCookie, getUserId, makeCookie } from "./_session.js";
+import { applyCors, clearCookie, getUserId, makeCookie, makeToken } from "./_session.js";
 
 function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
@@ -32,6 +32,8 @@ function normalizePhone(value: unknown) {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (applyCors(req, res)) return;
+
   const action = req.query.action;
   const sql = neon(process.env.DATABASE_URL as string);
 
@@ -77,7 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           RETURNING id, name, email, phone
         `;
         res.setHeader("Set-Cookie", makeCookie(rows[0].id));
-        return res.status(201).json({ user: rows[0] });
+        return res.status(201).json({ user: rows[0], token: makeToken(rows[0].id) });
       }
 
       if (!/^\S+@\S+\.\S+$/.test(cleanEmail)) {
@@ -91,7 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         RETURNING id, name, email, phone
       `;
       res.setHeader("Set-Cookie", makeCookie(rows[0].id));
-      return res.status(201).json({ user: rows[0] });
+      return res.status(201).json({ user: rows[0], token: makeToken(rows[0].id) });
     }
 
     if (action === "signin") {
@@ -107,6 +109,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.setHeader("Set-Cookie", makeCookie(rows[0].id));
       return res.status(200).json({
         user: { id: rows[0].id, name: rows[0].name, email: rows[0].email, phone: rows[0].phone },
+        token: makeToken(rows[0].id),
       });
     }
 

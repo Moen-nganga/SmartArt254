@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { ChangeEvent } from "react";
+import { apiUrl } from "../native";
 
 export interface Post {
   id: number;

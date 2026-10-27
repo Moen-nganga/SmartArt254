@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import Layout from "../components/Layout";
 import { link } from "../navigate";
 import { isValidPhone, nextPath, signUp } from "../auth";
+import { isNative, startGoogleSignIn } from "../native";
 
 type Method = "email" | "phone";
 
@@ -49,8 +50,13 @@ export default function SignUp() {
     window.location.href = nextPath("/member");
   }
 
-  function handleGoogle() {
-    window.location.href = `/api/google/start?next=${encodeURIComponent(nextPath("/member"))}`;
+    function handleGoogle() {
+    const next = nextPath("/member");
+    if (isNative) {
+      startGoogleSignIn(next);
+      return;
+    }
+    window.location.href = `/api/google/start?next=${encodeURIComponent(next)}`;
   }
 
   const field =

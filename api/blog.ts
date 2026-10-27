@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getUserId } from "./_session.js";
+import { applyCors, getUserId } from "./_session.js";
 
 const PREFIX = "data:image/jpeg;base64,";
 
@@ -14,6 +14,8 @@ function cleanImages(list: unknown): string[] {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (applyCors(req, res)) return;
+
   const sql = neon(process.env.DATABASE_URL as string);
 
   try {

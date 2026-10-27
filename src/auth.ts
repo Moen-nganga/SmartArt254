@@ -1,3 +1,5 @@
+import { setToken } from "./native";
+
 export interface User {
   id: number;
   name: string;
@@ -19,6 +21,7 @@ async function call(action: string, body?: object) {
       body: body ? JSON.stringify(body) : undefined,
     });
     const data = await res.json().catch(() => ({}));
+    if (res.ok && typeof data.token === "string") setToken(data.token);
     return { ok: res.ok, data };
   } catch {
     return { ok: false, data: { error: "Could not reach the server. Check your connection." } };
@@ -47,6 +50,7 @@ export function signUp(name: string, credentials: Credentials, password: string)
 
 export async function signOut() {
   await call("signout", {});
+  setToken(null);
 }
 
 export function nextPath(fallback = "/") {

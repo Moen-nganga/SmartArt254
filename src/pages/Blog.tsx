@@ -3,6 +3,7 @@ import Layout from "../components/Layout";
 import BlogEditor from "../components/BlogEditor";
 import type { Post } from "../components/BlogEditor";
 import { getUser } from "../auth";
+import { apiUrl } from "../native";
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
@@ -103,7 +104,7 @@ export default function Blog() {
                   {post.imageIds.length > 0 && (
                     <div className="mb-6 grid gap-3">
                       <img
-                        src={`/api/blog?image=${post.imageIds[0]}`}
+                        src={apiUrl(`/api/blog?image=${post.imageIds[0]}`)}
                         alt=""
                         loading="lazy"
                         className="aspect-[16/9] w-full rounded-2xl object-cover"
@@ -113,7 +114,7 @@ export default function Blog() {
                           {post.imageIds.slice(1).map((id) => (
                             <img
                               key={id}
-                              src={`/api/blog?image=${id}`}
+                              src={apiUrl(`/api/blog?image=${id}`)}
                               alt=""
                               loading="lazy"
                               className="aspect-square w-full rounded-2xl object-cover"

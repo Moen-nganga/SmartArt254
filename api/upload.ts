@@ -1,6 +1,6 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getUserId } from "./_session.js";
+import { applyCors, getUserId, verifyToken } from "./_session.js";
 
 const MAX_BYTES = 100 * 1024 * 1024;
 
@@ -15,6 +15,8 @@ const ALLOWED_TYPES = [
 ];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (applyCors(req, res)) return;
+
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });
@@ -24,8 +26,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const result = await handleUpload({
       request: req,
       body: req.body as HandleUploadBody,
-      onBeforeGenerateToken: async (pathname) => {
-        const userId = getUserId(req);
+      onBeforeGenerateToken: async (pathname, clientPayload) => {
+        const userId = getUserId(req) ?? (clientPayload ? verifyToken(clientPayload) : null);
         if (!userId) throw new Error("Please sign in.");
         if (!pathname.startsWith(`chat/${userId}/`)) throw new Error("Invalid upload path.");
         return {

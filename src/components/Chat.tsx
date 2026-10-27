@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, KeyboardEvent } from "react";
 import { upload } from "@vercel/blob/client";
 import type { User } from "../auth";
+import { apiUrl, getToken } from "../native";
 
 const MAX_BYTES = 100 * 1024 * 1024;
 const ACCEPT = "image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime";
@@ -270,7 +271,8 @@ function Thread({
         setProgress({ id: temp, percent: 0 });
         const blob = await upload(`chat/${user.id}/${safeName(current.file.name)}`, current.file, {
           access: "public",
-          handleUploadUrl: "/api/upload",
+          handleUploadUrl: apiUrl("/api/upload"),
+          clientPayload: getToken() ?? undefined,
           contentType: current.file.type,
           multipart: current.file.size > 8 * 1024 * 1024,
           onUploadProgress: ({ percentage }) => setProgress({ id: temp, percent: Math.round(percentage) }),

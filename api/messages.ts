@@ -2,7 +2,7 @@ import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
 import { head } from "@vercel/blob";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getUserId } from "./_session.js";
+import { applyCors, getUserId } from "./_session.js";
 
 const MAX_TEXT = 2000;
 const MAX_BYTES = 100 * 1024 * 1024;
@@ -81,6 +81,8 @@ function packAttachment(r: Record<string, any>) {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (applyCors(req, res)) return;
+
   const userId = getUserId(req);
   if (!userId) {
     return res.status(401).json({ error: "Please sign in." });

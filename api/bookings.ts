@@ -1,10 +1,12 @@
 import { neon } from "@neondatabase/serverless";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getUserId } from "./_session.js";
+import { applyCors, getUserId } from "./_session.js";
 
 const statuses = ["pending", "waiting_confirmation", "confirmed"];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (applyCors(req, res)) return;
+
   const userId = getUserId(req);
   if (!userId) {
     return res.status(401).json({ error: "Please sign in." });
