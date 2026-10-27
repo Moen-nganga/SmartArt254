@@ -2,7 +2,7 @@ import { App } from "@capacitor/app";
 import { Browser } from "@capacitor/browser";
 import { Capacitor } from "@capacitor/core";
 
-const API_BASE = "https://smartart254-seven.vercel.app/";
+const API_BASE = "https://smartart254-seven.vercel.app";
 const APP_SCHEME = "com.smartart254.app";
 const TOKEN_KEY = "smartart254_token";
 const NEXT_KEY = "smartart254_next";
