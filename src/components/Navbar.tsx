@@ -10,6 +10,7 @@ const items = [
   { label: "Events", path: "/events" },
   { label: "Blog", path: "/blog" },
   { label: "Book", path: "/book" },
+  { label: "Highlights", path: "/highlights" },
 ];
 
 export default function Navbar() {
