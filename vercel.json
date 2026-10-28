@@ -7,6 +7,7 @@
     { "source": "/privacy", "destination": "/index.html" },
     { "source": "/terms", "destination": "/index.html" },
     { "source": "/blog", "destination": "/index.html" },
+    { "source": "/jobs", "destination": "/index.html" },
     { "source": "/signin", "destination": "/index.html" },
     { "source": "/signup", "destination": "/index.html" },
     { "source": "/member", "destination": "/index.html" }
