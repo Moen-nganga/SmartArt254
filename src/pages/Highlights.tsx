@@ -201,6 +201,17 @@ export default function Highlights() {
     if (viewer && !current) setViewer(null);
   }, [viewer, current]);
 
+  useEffect(() => {
+    if (!viewer) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setViewer(null);
+      else if (e.key === "ArrowRight") next();
+      else if (e.key === "ArrowLeft") prev();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [viewer !== null, next, prev]);
+
   const onPick = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
