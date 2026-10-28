@@ -5,6 +5,7 @@ const items = [
   { label: "Privacy", path: "/privacy" },
   { label: "Terms", path: "/terms" },
   { label: "Blog", path: "/blog" },
+  { label: "Jobs", path: "/jobs" },
 ];
 
 export default function Footer() {

@@ -11,6 +11,7 @@ import Book from "./pages/Book";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Blog from "./pages/Blog";
+import Jobs from "./pages/Jobs";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Member from "./pages/Member";
@@ -26,6 +27,7 @@ const routes: Record<string, () => JSX.Element> = {
   "/privacy": Privacy,
   "/terms": Terms,
   "/blog": Blog,
+  "/jobs": Jobs,
   "/signin": SignIn,
   "/signup": SignUp,
   "/member": Member,
