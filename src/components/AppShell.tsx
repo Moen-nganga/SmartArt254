@@ -7,6 +7,7 @@ import Events from "../pages/Events";
 import Blog from "../pages/Blog";
 import Book from "../pages/Book";
 import Talk from "../pages/Talk";
+import Highlights from "../pages/Highlights";
 import Member from "../pages/Member";
 import { ShellContext } from "./ShellContext";
 
@@ -32,12 +33,16 @@ interface Tab {
   label: string;
   Page: () => JSX.Element;
   icon: ReactNode;
+  tint: string;
+  accent: string;
 }
 
 const tabs: Tab[] = [
   {
     path: "/",
     label: "Home",
+    tint: "#f87171bf",
+    accent: "#dc2626",
     Page: Home,
     icon: (
       <TabIcon>
@@ -49,6 +54,8 @@ const tabs: Tab[] = [
   {
     path: "/schools",
     label: "Schools",
+    tint: "#fb923cbf",
+    accent: "#ea580c",
     Page: Schools,
     icon: (
       <TabIcon>
@@ -60,6 +67,8 @@ const tabs: Tab[] = [
   {
     path: "/workshops",
     label: "Workshops",
+    tint: "#facc15bf",
+    accent: "#ca8a04",
     Page: Workshops,
     icon: (
       <TabIcon>
@@ -71,6 +80,8 @@ const tabs: Tab[] = [
   {
     path: "/events",
     label: "Events",
+    tint: "#4ade80bf",
+    accent: "#16a34a",
     Page: Events,
     icon: (
       <TabIcon>
@@ -82,8 +93,23 @@ const tabs: Tab[] = [
     ),
   },
   {
+    path: "/highlights",
+    label: "Highlights",
+    Page: Highlights,
+    tint: "#f472b6bf",
+    accent: "#db2777",
+    icon: (
+      <TabIcon>
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+        <circle cx="12" cy="13" r="4" />
+      </TabIcon>
+    ),
+  },
+  {
     path: "/blog",
     label: "Blog",
+    tint: "#60a5fabf",
+    accent: "#2563eb",
     Page: Blog,
     icon: (
       <TabIcon>
@@ -97,6 +123,8 @@ const tabs: Tab[] = [
   {
     path: "/book",
     label: "Book",
+    tint: "#c084fcbf",
+    accent: "#9333ea",
     Page: Book,
     icon: (
       <TabIcon>
@@ -108,6 +136,8 @@ const tabs: Tab[] = [
   {
     path: "/talk",
     label: "Talk",
+    tint: "#f472b6bf",
+    accent: "#db2777",
     Page: Talk,
     icon: (
       <TabIcon>
@@ -118,6 +148,8 @@ const tabs: Tab[] = [
   {
     path: "/member",
     label: "Account",
+    tint: "#f87171bf",
+    accent: "#dc2626",
     Page: Member,
     icon: (
       <TabIcon>
@@ -215,6 +247,7 @@ export default function AppShell({ initialPath }: { initialPath: string }) {
             <div
               key={tab.path}
               aria-hidden={i !== index}
+              style={{ backgroundColor: tab.tint }}
               className="h-full w-full shrink-0 snap-start snap-always overflow-y-auto overscroll-y-contain [&_.min-h-screen]:min-h-full"
             >
               {Math.abs(i - index) <= 1 ? <tab.Page /> : null}
@@ -235,8 +268,9 @@ export default function AppShell({ initialPath }: { initialPath: string }) {
                 type="button"
                 onClick={() => goTo(i)}
                 aria-current={i === index ? "page" : undefined}
+                style={i === index ? { color: tab.accent, boxShadow: `inset 0 3px 0 ${tab.accent}` } : undefined}
                 className={`flex min-w-[4.75rem] flex-1 flex-col items-center gap-1 px-2 py-2.5 text-xs font-bold transition ${
-                  i === index ? "text-pink" : "text-ink/70"
+                  i === index ? "" : "text-ink/70"
                 }`}
               >
                 {tab.icon}

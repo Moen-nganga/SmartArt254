@@ -3,6 +3,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { applyCors, getUserId, verifyToken } from "./_session.js";
 
 const MAX_BYTES = 100 * 1024 * 1024;
+const MAX_PICTURE_BYTES = 10 * 1024 * 1024;
 
 const ALLOWED_TYPES = [
   "image/jpeg",
@@ -13,6 +14,8 @@ const ALLOWED_TYPES = [
   "video/webm",
   "video/quicktime",
 ];
+
+const PICTURE_TYPES = ALLOWED_TYPES.filter((t) => t.startsWith("image/"));
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (applyCors(req, res)) return;
@@ -29,10 +32,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       onBeforeGenerateToken: async (pathname, clientPayload) => {
         const userId = getUserId(req) ?? (clientPayload ? verifyToken(clientPayload) : null);
         if (!userId) throw new Error("Please sign in.");
-        if (!pathname.startsWith(`chat/${userId}/`)) throw new Error("Invalid upload path.");
+        const isChat = pathname.startsWith(`chat/${userId}/`);
+        const isHighlight = pathname.startsWith(`highlights/${userId}/`);
+        if (!isChat && !isHighlight) throw new Error("Invalid upload path.");
         return {
-          allowedContentTypes: ALLOWED_TYPES,
-          maximumSizeInBytes: MAX_BYTES,
+          allowedContentTypes: isHighlight ? PICTURE_TYPES : ALLOWED_TYPES,
+          maximumSizeInBytes: isHighlight ? MAX_PICTURE_BYTES : MAX_BYTES,
           addRandomSuffix: true,
         };
       },

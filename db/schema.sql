@@ -76,3 +76,13 @@ ALTER TABLE messages ADD COLUMN IF NOT EXISTS attachment_url TEXT;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS attachment_type TEXT;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS attachment_name TEXT;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS attachment_size INTEGER;
+
+CREATE TABLE IF NOT EXISTS highlights (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  url TEXT NOT NULL,
+  caption TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS highlights_created_at_idx ON highlights (created_at DESC);
