@@ -17,7 +17,7 @@ function slug(text: string) {
     .replace(/^-|-$/g, "");
 }
 
-function Photo({ src, alt }: { src: string; alt: string }) {
+function Photo({ src, alt, first }: { src: string; alt: string; first: boolean }) {
   const [failed, setFailed] = useState(false);
 
   if (failed) {
@@ -32,7 +32,8 @@ function Photo({ src, alt }: { src: string; alt: string }) {
     <img
       src={src}
       alt={alt}
-      loading="lazy"
+      loading={first ? "eager" : "lazy"}
+      decoding="async"
       onError={() => setFailed(true)}
       className="aspect-[4/5] w-full rounded-3xl object-cover shadow-xl"
     />
@@ -59,12 +60,12 @@ export default function FeatureList({ heading, intro, label, folder, offers }: P
         {offers.map((o, i) => {
           const odd = i % 2 === 1;
           return (
-            <article key={o.title} className="grid items-center gap-6 md:grid-cols-2 md:gap-16">
+            <article key={o.title} id={slug(o.title)} className="grid items-center gap-6 md:grid-cols-2 md:gap-16">
               <Reveal
                 from={odd ? "right" : "left"}
                 className={`w-full max-w-md ${odd ? "md:order-2 md:justify-self-end" : ""}`}
               >
-                <Photo src={`/images/${folder}/${slug(o.title)}.jpg`} alt={o.title} />
+                <Photo src={`/images/${folder}/${slug(o.title)}.jpg`} alt={`${o.title} with SmartArt254`} first={i === 0} />
               </Reveal>
               <Reveal from={odd ? "left" : "right"} delay={150}>
                 <div className={`h-2 w-12 rounded-full ${bars[o.accent]}`} />
@@ -74,6 +75,7 @@ export default function FeatureList({ heading, intro, label, folder, offers }: P
                 <a
                   href="/book"
                   onClick={link("/book")}
+                  aria-label={`Book ${o.title}`}
                   className="mt-6 inline-block rounded-full bg-sun px-7 py-3 text-lg font-bold text-ink"
                 >
                   Book this

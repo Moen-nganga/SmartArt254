@@ -10,6 +10,7 @@ const SITE = {
   imageAlt: "Children and adults enjoying a SmartArt254 art workshop",
   description:
     "SmartArt254 brings hands-on art workshops, school art programmes and creative events to schools, families and groups across Kenya.",
+  phones: ["+254757848911", "+254704537582"],
 };
 
 interface RouteSeo {
@@ -50,7 +51,7 @@ const routes: RouteSeo[] = [
     title: "School Art Programmes & Art Lessons in Kenya | SmartArt254",
     description:
       "Bring SmartArt254 to your school for art lessons, digital art classes, art challenges, competitions and school art fun days across Kenya.",
-    heading: "Art programmes for schools",
+    heading: "Art programmes for schools in Kenya",
     intro:
       "Art lessons, digital art classes, art challenges, competitions and fun days designed for schools in Kenya.",
     index: true,
@@ -73,7 +74,7 @@ const routes: RouteSeo[] = [
     title: "Creative Art Workshops in Kenya | SmartArt254",
     description:
       "Join hands-on art workshops in Kenya: canvas painting, resin and eco art, bottle art, mirror art, slime making, tote bag painting and more.",
-    heading: "Creative art workshops",
+    heading: "Art workshops and crafts in Kenya",
     intro:
       "Canvas painting, resin and eco art, bottle art, mirror art, cutout art, slime making, t-shirt and dera art, and tote bag painting.",
     index: true,
@@ -99,7 +100,7 @@ const routes: RouteSeo[] = [
     title: "Art Events for Birthdays, Teams & Weddings | SmartArt254",
     description:
       "Add creative fun to birthday parties, corporate team days, family days and weddings with SmartArt254 art experiences across Kenya.",
-    heading: "Art experiences for events",
+    heading: "Art events for every occasion",
     intro:
       "Birthday parties, corporate team days, family days and weddings, made memorable with guided creative activities.",
     index: true,
@@ -113,30 +114,20 @@ const routes: RouteSeo[] = [
   {
     path: "/highlights",
     label: "Highlights",
-    title: "Highlights from Our Art Sessions | SmartArt254",
-    description:
-      "See highlights from SmartArt254 art workshops, school programmes and events across Kenya.",
+    title: "Highlights | SmartArt254",
+    description: "Moments from recent SmartArt254 events, shared by members.",
     heading: "Highlights",
-    intro: "Moments from SmartArt254 workshops, school programmes and events.",
-    index: true,
-    nav: true,
-    priority: "0.6",
-    changefreq: "weekly",
+    intro: "",
+    index: false,
   },
   {
     path: "/book",
     label: "Book",
-    title: "Book an Art Workshop, School Programme or Event | SmartArt254",
-    description:
-      "Book SmartArt254 for a school art programme, creative workshop, birthday party, team day or family event in Kenya.",
-    heading: "Book SmartArt254",
-    intro:
-      "Request a school programme, workshop, party or event and our team will get back to you.",
-    index: true,
-    nav: true,
-    schema: "ContactPage",
-    priority: "0.9",
-    changefreq: "monthly",
+    title: "Book an Activity | SmartArt254",
+    description: "Book a SmartArt254 activity for your school, party or event.",
+    heading: "Book an activity",
+    intro: "",
+    index: false,
   },
   {
     path: "/blog",
@@ -244,7 +235,14 @@ const jsonLd = (r: RouteSeo) => {
       url: `${SITE.url}/`,
       image: abs(SITE.image),
       description: SITE.description,
-      areaServed: kenya,
+      telephone: SITE.phones[0],
+      areaServed: [kenya, { "@type": "City", name: "Nairobi" }],
+      contactPoint: SITE.phones.map((telephone) => ({
+        "@type": "ContactPoint",
+        telephone,
+        contactType: "customer service",
+        areaServed: "KE",
+      })),
     },
     {
       "@type": "WebSite",

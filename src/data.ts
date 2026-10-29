@@ -7,15 +7,15 @@ export interface Offer {
 }
 
 export const schoolOffers: Offer[] = [
-  { title: "School art lessons", text: "We provide weekly or termly art classes fixed around your curriculum, to suit the learners needs.", accent: "pink" },
-  { title: "Computer and digital art lessons", text: "We also help learners create digital art on computers while helping them building basic computer skills.", accent: "sun" },
-  { title: "School art fun day", text: "A whole organized school event of stations, colour and games for kids of all ages to create, explore and enjoy", accent: "leaf" },
+  { title: "School art lessons", text: "We provide weekly or termly art classes fixed around your curriculum, to suit each learner's needs.", accent: "pink" },
+  { title: "Computer and digital art lessons", text: "We also help learners create digital art on computers while helping them build basic computer skills.", accent: "sun" },
+  { title: "School art fun day", text: "A whole organized school event of stations, colour and games for kids of all ages to create, explore and enjoy.", accent: "leaf" },
   { title: "Art challenge", text: "We also provide themed classes and house challenges with showcases at the end.", accent: "royal" },
   { title: "Art competition", text: "We also run the brief, judging and prizes for a school art competition.", accent: "pink" },
 ];
 
 export const workshopOffers: Offer[] = [
-  { title: "Canvas painting", text: "Guided step by step, to help  beginners begin and finish a real painting.", accent: "pink" },
+  { title: "Canvas painting", text: "Guided step by step, to help beginners begin and finish a real painting.", accent: "pink" },
   { title: "Slime making", text: "Colourful, safe slime with glitter and add-ins.", accent: "sun" },
   { title: "Resin and eco art", text: "Keepsakes made with resin and recycled or natural materials.", accent: "leaf" },
   { title: "Tote bag painting", text: "You can design and paint a bag you will use every day.", accent: "royal" },
@@ -26,10 +26,10 @@ export const workshopOffers: Offer[] = [
 ];
 
 export const eventOffers: Offer[] = [
-  { title: "Birthday parties", text: "We host, set up the supplies, and arrange a wide range of fun activites for all the guests.", accent: "sun" },
+  { title: "Birthday parties", text: "We host, set up the supplies, and arrange a wide range of fun activities for all the guests.", accent: "sun" },
   { title: "Weddings", text: "We also organize guest art stations and a keepsake canvas for couples and wedding guests.", accent: "pink" },
   { title: "Family days", text: "We host relaxed sessions for parents and children to create together.", accent: "leaf" },
-  { title: "Corporate team days", text: "We structure team buidling activities centered around shared art projects.", accent: "royal" },
+  { title: "Corporate team days", text: "We structure team building activities centered around shared art projects.", accent: "royal" },
 ];
 
 export const bookingOptions: string[] = [
@@ -52,4 +52,4 @@ export const needOptions: string[] = [
   ...workshopOffers.map((o) => o.title),
 ];
 
-export const whatsappNumber = "254700000000";
+export const whatsappNumber = "254757848911";

@@ -99,23 +99,24 @@ export default function Blog() {
               ) : (
                 <article
                   key={post.id}
+                  id={`post-${post.id}`}
                   className="rounded-3xl border border-ink/10 bg-white/80 p-6 shadow-xl backdrop-blur-sm sm:p-8"
                 >
                   {post.imageIds.length > 0 && (
                     <div className="mb-6 grid gap-3">
                       <img
                         src={apiUrl(`/api/blog?image=${post.imageIds[0]}`)}
-                        alt=""
+                        alt={post.title}
                         loading="lazy"
                         className="aspect-[16/9] w-full rounded-2xl object-cover"
                       />
                       {post.imageIds.length > 1 && (
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                          {post.imageIds.slice(1).map((id) => (
+                          {post.imageIds.slice(1).map((id, n) => (
                             <img
                               key={id}
                               src={apiUrl(`/api/blog?image=${id}`)}
-                              alt=""
+                              alt={`${post.title}, photo ${n + 2}`}
                               loading="lazy"
                               className="aspect-square w-full rounded-2xl object-cover"
                             />
@@ -124,9 +125,12 @@ export default function Blog() {
                       )}
                     </div>
                   )}
-                  <p className="text-sm font-semibold uppercase tracking-widest text-ink/60">
+                  <time
+                    dateTime={post.createdAt}
+                    className="block text-sm font-semibold uppercase tracking-widest text-ink/60"
+                  >
                     {formatDate(post.createdAt)}
-                  </p>
+                  </time>
                   <h2 className="mt-2 text-3xl font-extrabold leading-tight sm:text-4xl">{post.title}</h2>
                   <p className="mt-4 whitespace-pre-line text-lg leading-relaxed text-ink/90">{post.body}</p>
 

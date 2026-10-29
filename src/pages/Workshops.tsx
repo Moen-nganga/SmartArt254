@@ -6,7 +6,7 @@ export default function Workshops() {
   return (
     <Layout>
       <FeatureList
-        heading="Art workshops and crafts"
+        heading="Art workshops and crafts in Kenya"
         intro="Pick one activity or mix several in a single session."
         label="Workshops"
         folder="workshops"

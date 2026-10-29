@@ -6,7 +6,7 @@ export default function Schools() {
   return (
     <Layout>
       <FeatureList
-        heading="For schools"
+        heading="Art programmes for schools in Kenya"
         intro="Programmes that fit the timetable and get every learner making."
         label="Schools"
         folder="schools"
