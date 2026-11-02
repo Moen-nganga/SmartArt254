@@ -86,3 +86,5 @@ CREATE TABLE IF NOT EXISTS highlights (
 );
 
 CREATE INDEX IF NOT EXISTS highlights_created_at_idx ON highlights (created_at DESC);
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS notifications_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW();

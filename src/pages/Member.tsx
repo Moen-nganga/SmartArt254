@@ -5,6 +5,7 @@ import FeatureList from "../components/FeatureList";
 import AdminBookings from "../components/AdminBookings";
 import MyBookings from "../components/MyBookings";
 import Chat from "../components/Chat";
+import Notifications from "../components/Notifications";
 import { eventOffers, needOptions, schoolOffers, workshopOffers } from "../data";
 import { getUser, signOut } from "../auth";
 import type { User } from "../auth";
@@ -344,6 +345,7 @@ export default function Member() {
           Smart<span className="text-pink">Art</span>254
         </button>
         <nav aria-label="Main" className="flex flex-wrap items-center gap-5 text-lg font-semibold sm:gap-10 sm:text-2xl">
+          {user && <Notifications />}
           <a href="/" onClick={link("/")} className="hover:text-pink">
             Home
           </a>
