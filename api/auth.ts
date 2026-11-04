@@ -2,6 +2,13 @@ import { neon } from "@neondatabase/serverless";
 import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { applyCors, clearCookie, getUserId, makeCookie, makeToken } from "./_session.js";
+import { clientIp, hashKey, hit, resetLimit, tooMany } from "./_rateLimit.js";
+
+const SIGNIN_IP_LIMIT = 20;
+const SIGNIN_ACCOUNT_LIMIT = 5;
+const SIGNIN_WINDOW_SECONDS = 15 * 60;
+const SIGNUP_IP_LIMIT = 10;
+const SIGNUP_WINDOW_SECONDS = 60 * 60;
 
 function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
@@ -60,8 +67,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const cleanEmail = String(email ?? "").trim().toLowerCase();
     const phoneGiven = String(phone ?? "").trim() !== "";
     const cleanPhone = phoneGiven ? normalizePhone(phone) : null;
+    const ip = clientIp(req);
 
     if (action === "signup") {
+      const ipLimit = await hit(sql, `signup:ip:${ip}`, SIGNUP_IP_LIMIT, SIGNUP_WINDOW_SECONDS);
+      if (!ipLimit.allowed) return tooMany(res, ipLimit.retryAfter);
+
       const cleanName = String(name ?? "").trim();
       if (!cleanName || String(password ?? "").length < 8) {
         return res.status(400).json({ error: "Enter your name and a password of at least 8 characters." });
@@ -97,15 +108,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (action === "signin") {
+      const ipLimit = await hit(sql, `signin:ip:${ip}`, SIGNIN_IP_LIMIT, SIGNIN_WINDOW_SECONDS);
+      if (!ipLimit.allowed) return tooMany(res, ipLimit.retryAfter);
+
       if (phoneGiven && !cleanPhone) {
         return res.status(400).json({ error: "Enter a valid phone number with at least 10 digits." });
       }
+
+      const accountKey = `signin:account:${hashKey(phoneGiven ? String(cleanPhone) : cleanEmail)}`;
+      const accountLimit = await hit(sql, accountKey, SIGNIN_ACCOUNT_LIMIT, SIGNIN_WINDOW_SECONDS);
+      if (!accountLimit.allowed) return tooMany(res, accountLimit.retryAfter);
+
       const rows = phoneGiven
         ? await sql`SELECT id, name, email, phone, password_hash FROM users WHERE phone = ${cleanPhone}`
         : await sql`SELECT id, name, email, phone, password_hash FROM users WHERE email = ${cleanEmail}`;
       if (!rows.length || !checkPassword(String(password ?? ""), rows[0].password_hash)) {
         return res.status(401).json({ error: "Incorrect details or password." });
       }
+
+      await resetLimit(sql, accountKey);
       res.setHeader("Set-Cookie", makeCookie(rows[0].id));
       return res.status(200).json({
         user: { id: rows[0].id, name: rows[0].name, email: rows[0].email, phone: rows[0].phone },
