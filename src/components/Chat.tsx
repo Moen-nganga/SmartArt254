@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, KeyboardEvent } from "react";
 import { upload } from "@vercel/blob/client";
 import type { User } from "../auth";
-import { apiUrl, getToken } from "../native";
+import { apiUrl, getToken, isNative, onBack as registerBack } from "../native";
 
 const MAX_BYTES = 100 * 1024 * 1024;
 const ACCEPT = "image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime";
@@ -136,6 +136,7 @@ function Thread({
   const [error, setError] = useState("");
   const list = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const input = useRef<HTMLTextAreaElement>(null);
   const queue = useRef<Promise<void>>(Promise.resolve());
   const tempId = useRef(0);
   const poll = useRef<() => void>(() => {});
@@ -222,6 +223,13 @@ function Thread({
   useEffect(() => {
     scrollDown();
   }, [messages.length, loaded]);
+
+  useEffect(() => {
+    const el = input.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 128)}px`;
+  }, [text]);
 
   const onPick = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -331,7 +339,7 @@ function Thread({
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey && !isNative) {
       e.preventDefault();
       send();
     }
@@ -339,7 +347,7 @@ function Thread({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex items-center gap-3 border-b border-ink/10 px-4 py-4 sm:px-6">
+      <div className="flex shrink-0 items-center gap-3 border-b border-ink/10 px-4 py-3 sm:px-6 sm:py-4">
         {onBack && (
           <button
             type="button"
@@ -356,7 +364,10 @@ function Thread({
         </div>
       </div>
 
-      <div ref={list} className="flex-1 space-y-3 overflow-y-auto px-4 py-5 sm:px-6">
+      <div
+        ref={list}
+        className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5"
+      >
         {!loaded ? (
           <p className="text-base font-semibold text-ink/70">Loading messages</p>
         ) : messages.length === 0 ? (
@@ -398,12 +409,12 @@ function Thread({
       </div>
 
       {error && (
-        <p role="alert" className="mx-4 mb-3 rounded-xl bg-pink px-4 py-3 font-semibold text-white sm:mx-6">
+        <p role="alert" className="mx-4 mb-3 shrink-0 rounded-xl bg-pink px-4 py-3 font-semibold text-white sm:mx-6">
           {error}
         </p>
       )}
 
-      <div className="border-t border-ink/10 px-4 py-4 sm:px-6">
+      <div className="shrink-0 border-t border-ink/10 px-3 py-3 sm:px-6 sm:py-4">
         {picked && (
           <div className="mb-3 flex items-center gap-3 rounded-2xl bg-ink/5 p-2">
             {picked.file.type.startsWith("video/") ? (
@@ -431,7 +442,7 @@ function Thread({
             </button>
           </div>
         )}
-        <div className="flex items-end gap-3">
+        <div className="flex items-end gap-2 sm:gap-3">
           <input ref={fileInput} type="file" accept={ACCEPT} onChange={onPick} className="hidden" />
           <button
             type="button"
@@ -453,22 +464,43 @@ function Thread({
             </svg>
           </button>
           <textarea
+            ref={input}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={onKeyDown}
+            onFocus={() => window.setTimeout(scrollDown, 300)}
             rows={1}
             maxLength={2000}
             aria-label="Message"
             placeholder="Type a message"
-            className="max-h-32 min-h-[3rem] flex-1 resize-none rounded-2xl border-2 border-ink/20 bg-white px-4 py-2.5 text-base font-semibold text-ink placeholder:text-ink/40 focus:border-royal focus:outline-none focus:ring-2 focus:ring-royal/30"
+            className="max-h-32 min-h-[3rem] min-w-0 flex-1 resize-none rounded-2xl border-2 border-ink/20 bg-white px-4 py-2.5 text-base font-semibold text-ink placeholder:text-ink/40 focus:border-royal focus:outline-none focus:ring-2 focus:ring-royal/30"
           />
           <button
             type="button"
             onClick={send}
             disabled={!text.trim() && !picked}
-            className="rounded-full bg-sun px-6 py-3 text-base font-bold text-ink transition hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-royal/60 disabled:opacity-50"
+            aria-label="Send message"
+            className={`flex shrink-0 items-center justify-center rounded-full bg-sun font-bold text-ink transition hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-royal/60 disabled:opacity-50 ${
+              isNative ? "h-12 w-12" : "px-6 py-3 text-base"
+            }`}
           >
-            Send
+            {isNative ? (
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+            ) : (
+              "Send"
+            )}
           </button>
         </div>
       </div>
@@ -481,6 +513,18 @@ function AdminChat({ user }: { user: User }) {
   const [selected, setSelected] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [version, setVersion] = useState(0);
+  const root = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (selected === null) return;
+    return registerBack(
+      () => {
+        setSelected(null);
+        return true;
+      },
+      () => root.current
+    );
+  }, [selected !== null]);
 
   useEffect(() => {
     let active = true;
@@ -530,9 +574,9 @@ function AdminChat({ user }: { user: User }) {
   const current = items.find((i) => i.memberId === selected) ?? null;
 
   return (
-    <div className="grid h-full md:grid-cols-[20rem_1fr]">
+    <div ref={root} className="grid h-full md:grid-cols-[20rem_1fr]">
       <div
-        className={`${selected === null ? "block" : "hidden"} min-h-0 overflow-y-auto border-ink/10 md:block md:border-r`}
+        className={`${selected === null ? "block" : "hidden"} h-full min-h-0 overflow-y-auto border-ink/10 md:block md:border-r`}
       >
         <div className="border-b border-ink/10 px-4 py-4 sm:px-6">
           <h2 className="text-xl font-extrabold">Conversations</h2>
@@ -573,7 +617,7 @@ function AdminChat({ user }: { user: User }) {
         )}
       </div>
 
-      <div className={`${selected === null ? "hidden" : "block"} min-h-0 md:block`}>
+      <div className={`${selected === null ? "hidden" : "block"} h-full min-h-0 md:block`}>
         {selected === null || !current ? (
           <div className="flex h-full items-center justify-center px-6">
             <p className="max-w-xs text-center text-base font-semibold text-ink/70">
@@ -596,7 +640,15 @@ function AdminChat({ user }: { user: User }) {
   );
 }
 
-export default function Chat({ user }: { user: User }) {
+export default function Chat({ user, fill = false }: { user: User; fill?: boolean }) {
+  const body = user.isAdmin ? (
+    <AdminChat user={user} />
+  ) : (
+    <Thread user={user} memberId={user.id} heading="SmartArt254 hosts" subheading="Private conversation" />
+  );
+
+  if (fill) return <div className="h-full bg-white/80 backdrop-blur-sm">{body}</div>;
+
   return (
     <section className="mx-auto w-full max-w-5xl px-5 py-12 sm:px-10 sm:py-16">
       <h1 className="text-4xl font-extrabold leading-tight sm:text-6xl">
@@ -609,11 +661,7 @@ export default function Chat({ user }: { user: User }) {
       </p>
 
       <div className="mt-8 h-[70vh] min-h-[26rem] overflow-hidden rounded-3xl border border-ink/10 bg-white/80 shadow-xl backdrop-blur-sm">
-        {user.isAdmin ? (
-          <AdminChat user={user} />
-        ) : (
-          <Thread user={user} memberId={user.id} heading="SmartArt254 hosts" subheading="Private conversation" />
-        )}
+        {body}
       </div>
     </section>
   );

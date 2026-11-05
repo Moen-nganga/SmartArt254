@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import Chat from "../components/Chat";
+import { ShellContext } from "../components/ShellContext";
 import { getUser } from "../auth";
 import type { User } from "../auth";
 
 export default function Talk() {
+  const inShell = useContext(ShellContext);
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -16,6 +18,14 @@ export default function Talk() {
       setUser(found);
     });
   }, []);
+
+  if (inShell) {
+    return (
+      <div className="h-full">
+        {user ? <Chat user={user} fill /> : <p className="px-5 py-10 text-xl font-semibold">Loading</p>}
+      </div>
+    );
+  }
 
   return (
     <Layout>

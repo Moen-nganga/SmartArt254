@@ -10,6 +10,7 @@ import Talk from "../pages/Talk";
 import Highlights from "../pages/Highlights";
 import Member from "../pages/Member";
 import { ShellContext } from "./ShellContext";
+import { exitApp, setBackFallback } from "../native";
 
 function TabIcon({ children }: { children: ReactNode }) {
   return (
@@ -135,7 +136,7 @@ const tabs: Tab[] = [
   },
   {
     path: "/talk",
-    label: "Talk",
+    label: "Chat",
     tint: "#f472b6bf",
     accent: "#db2777",
     Page: Talk,
@@ -166,8 +167,12 @@ export default function AppShell({ initialPath }: { initialPath: string }) {
   const start = Math.max(0, tabPaths.indexOf(initialPath));
   const [index, setIndex] = useState(start);
   const [keyboard, setKeyboard] = useState(false);
+  const [viewHeight, setViewHeight] = useState<number | undefined>(undefined);
   const pager = useRef<HTMLDivElement>(null);
   const bar = useRef<HTMLElement>(null);
+  const indexRef = useRef(start);
+  const goToRef = useRef<(target: number) => void>(() => {});
+  indexRef.current = index;
 
   useLayoutEffect(() => {
     const el = pager.current;
@@ -189,13 +194,21 @@ export default function AppShell({ initialPath }: { initialPath: string }) {
   }, [index]);
 
   useEffect(() => {
-    let full = window.innerHeight;
-    const onResize = () => {
-      if (window.innerHeight > full) full = window.innerHeight;
-      setKeyboard(window.innerHeight < full * 0.75);
+    const vv = window.visualViewport;
+    let full = Math.max(window.innerHeight, vv ? vv.height : 0);
+    const update = () => {
+      const h = vv ? vv.height : window.innerHeight;
+      if (h > full) full = h;
+      setKeyboard(h < full * 0.75);
+      setViewHeight(h);
     };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    update();
+    window.addEventListener("resize", update);
+    vv?.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      vv?.removeEventListener("resize", update);
+    };
   }, []);
 
   const onScroll = () => {
@@ -220,6 +233,16 @@ export default function AppShell({ initialPath }: { initialPath: string }) {
     [index]
   );
 
+  goToRef.current = goTo;
+
+  useEffect(() => {
+    setBackFallback(() => {
+      if (indexRef.current !== 0) goToRef.current(0);
+      else exitApp();
+    });
+    return () => setBackFallback(null);
+  }, []);
+
   const onClickCapture = (e: MouseEvent<HTMLDivElement>) => {
     const anchor = (e.target as Element).closest("a");
     const href = anchor?.getAttribute("href");
@@ -235,7 +258,7 @@ export default function AppShell({ initialPath }: { initialPath: string }) {
     <ShellContext.Provider value={true}>
       <div
         className="fixed inset-0 flex flex-col"
-        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+        style={{ paddingTop: "env(safe-area-inset-top, 0px)", height: keyboard ? viewHeight : undefined }}
         onClickCapture={onClickCapture}
       >
         <div

@@ -4,7 +4,7 @@ import { upload } from "@vercel/blob/client";
 import Layout from "../components/Layout";
 import { getUser } from "../auth";
 import type { User } from "../auth";
-import { apiUrl, getToken } from "../native";
+import { apiUrl, getToken, onBack } from "../native";
 
 interface Highlight {
   id: number;
@@ -211,6 +211,14 @@ export default function Highlights() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [viewer !== null, next, prev]);
+
+  useEffect(() => {
+    if (!viewer) return;
+    return onBack(() => {
+      setViewer(null);
+      return true;
+    });
+  }, [viewer !== null]);
 
   const onPick = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

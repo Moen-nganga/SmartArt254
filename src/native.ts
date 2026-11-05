@@ -30,6 +30,31 @@ export function apiUrl(path: string) {
   return isNative && path.startsWith("/") ? `${API_BASE}${path}` : path;
 }
 
+interface BackEntry {
+  run: () => boolean;
+  anchor?: () => Element | null;
+}
+
+const backEntries: BackEntry[] = [];
+let backFallback: (() => void) | null = null;
+
+export function onBack(run: () => boolean, anchor?: () => Element | null) {
+  const entry: BackEntry = { run, anchor };
+  backEntries.push(entry);
+  return () => {
+    const i = backEntries.indexOf(entry);
+    if (i !== -1) backEntries.splice(i, 1);
+  };
+}
+
+export function setBackFallback(fn: (() => void) | null) {
+  backFallback = fn;
+}
+
+export function exitApp() {
+  App.exitApp();
+}
+
 export function startGoogleSignIn(next: string) {
   try {
     localStorage.setItem(NEXT_KEY, next);
@@ -53,6 +78,21 @@ if (isNative) {
     }
     return originalFetch(input, init);
   };
+
+  App.addListener("backButton", ({ canGoBack }) => {
+    for (let i = backEntries.length - 1; i >= 0; i--) {
+      const entry = backEntries[i];
+      const el = entry.anchor ? entry.anchor() : null;
+      if (el && el.closest('[aria-hidden="true"]')) continue;
+      if (entry.run()) return;
+    }
+    if (backFallback) {
+      backFallback();
+      return;
+    }
+    if (canGoBack) window.history.back();
+    else App.exitApp();
+  });
 
   App.addListener("appUrlOpen", ({ url }) => {
     if (!url.startsWith(`${APP_SCHEME}://auth`)) return;
