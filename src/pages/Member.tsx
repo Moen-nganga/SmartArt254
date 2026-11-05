@@ -36,72 +36,97 @@ const whatsappLines = [
 const field =
   "mt-2 w-full rounded-2xl border-2 border-ink/20 bg-white px-5 py-3.5 text-lg font-semibold text-ink placeholder:text-ink/40 focus:border-royal focus:outline-none focus:ring-2 focus:ring-royal/30";
 
-function Welcome({
+function initials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join("");
+}
+
+function Welcome({ user }: { user: User }) {
+  return (
+    <section className="py-10 sm:py-14">
+      <h1 className="text-4xl font-extrabold leading-[1.05] sm:text-6xl">Welcome back, {user.name.split(" ")[0]}.</h1>
+      <p className="mt-6 max-w-2xl text-lg text-ink/80 sm:text-xl">
+        Ready for your next creative day? Browse what we offer, or send us your booking details and we will confirm a
+        host for your date.
+      </p>
+      <div className="mt-8 flex gap-4" aria-hidden="true">
+        {dots.map((d) => (
+          <span key={d} className={`h-10 w-10 rounded-full ${d}`} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Sidebar({
   user,
+  view,
   onNavigate,
   onSignOut,
 }: {
   user: User;
+  view: View;
   onNavigate: (view: View) => void;
   onSignOut: () => void;
 }) {
+  const outline = (v: View) =>
+    `w-full rounded-full border-2 px-5 py-3 text-base font-bold transition ${
+      view === v ? "border-ink bg-ink text-white" : "border-ink text-ink hover:bg-ink hover:text-white"
+    }`;
+
   return (
-    <div className="flex flex-1 flex-col">
-      <section className="flex flex-1 flex-col items-center justify-center px-5 py-12 text-center sm:px-10">
-        <h1 className="max-w-5xl text-5xl font-extrabold leading-[1.05] sm:text-8xl">
-          Welcome back, {user.name.split(" ")[0]}.
-        </h1>
-        <p className="mt-8 max-w-3xl text-xl text-ink/80 sm:text-2xl">
-          Ready for your next creative day? Browse what we offer, or send us your booking details and we will confirm
-          a host for your date.
-        </p>
-        <div className="mt-9 flex justify-center gap-4" aria-hidden="true">
-          {dots.map((d) => (
-            <span key={d} className={`h-11 w-11 rounded-full ${d}`} />
-          ))}
-        </div>
-        <div className="mt-10 flex flex-wrap justify-center gap-4">
+    <aside className="lg:sticky lg:top-6 lg:self-start">
+      <div className="rounded-3xl border border-ink/10 bg-white/80 p-6 shadow-xl backdrop-blur-sm">
+        <p className="text-2xl font-extrabold">{user.name}</p>
+        <div className="mt-5 flex flex-col gap-3">
           <button
             type="button"
             onClick={() => onNavigate("book")}
-            className="rounded-full bg-sun px-9 py-4 text-xl font-bold text-ink"
+            className="w-full rounded-full bg-sun px-5 py-3 text-base font-bold text-ink transition hover:brightness-105"
           >
             Book an activity
           </button>
-          <button
-            type="button"
-            onClick={() => onNavigate("services")}
-            className="rounded-full border-2 border-ink px-9 py-4 text-xl font-bold text-ink transition hover:bg-ink hover:text-white"
-          >
-            Browse services
-          </button>
-          <button
-            type="button"
-            onClick={() => onNavigate("chat")}
-            className="rounded-full border-2 border-royal px-9 py-4 text-xl font-bold text-royal transition hover:bg-royal hover:text-white"
-          >
+          <button type="button" onClick={() => onNavigate("chat")} className={outline("chat")}>
             {user.isAdmin ? "Talk to a user" : "Talk to a host"}
           </button>
+          <button type="button" onClick={() => onNavigate("services")} className={outline("services")}>
+            Browse services
+          </button>
         </div>
-      </section>
-
-      <div className="flex justify-end px-5 pb-8 sm:px-10">
-        <div className="flex w-full max-w-md flex-wrap items-center justify-between gap-4 rounded-3xl border border-ink/10 bg-white/80 p-6 shadow-xl backdrop-blur-sm">
+        <dl className="mt-6 grid grid-cols-2 gap-4 border-t border-ink/15 pt-5">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-widest text-ink/70">Signed in as</p>
-            <p className="mt-1 text-xl font-bold">{user.name}</p>
-            <p className="text-base text-ink/80">{user.email ?? user.phone}</p>
+            <dt className="text-sm text-ink/70">Account</dt>
+            <dd className="mt-1 text-base font-bold">{user.isAdmin ? "Admin" : "Member"}</dd>
           </div>
+          <div className="min-w-0">
+            <dt className="text-sm text-ink/70">Contact</dt>
+            <dd className="mt-1 truncate text-base font-bold">{user.email ?? user.phone}</dd>
+          </div>
+        </dl>
+        <div className="mt-5 border-t border-ink/15 pt-5">
           <button
             type="button"
             onClick={onSignOut}
-            className="rounded-full border-2 border-ink px-6 py-2.5 text-base font-bold text-ink transition hover:bg-ink hover:text-white"
+            className="w-full rounded-full border-2 border-ink px-5 py-2.5 text-base font-bold text-ink transition hover:bg-ink hover:text-white"
           >
             Sign out
           </button>
         </div>
       </div>
-    </div>
+      <p className="mt-4 flex flex-wrap gap-x-4 gap-y-1 px-2 text-sm text-ink/70">
+        <a href="/privacy" onClick={link("/privacy")} className="hover:text-pink">
+          Privacy
+        </a>
+        <a href="/terms" onClick={link("/terms")} className="hover:text-pink">
+          Terms
+        </a>
+        <span>© {new Date().getFullYear()} SmartArt254</span>
+      </p>
+    </aside>
   );
 }
 
@@ -186,8 +211,8 @@ function BookingForm({ user }: { user: User }) {
   const ready = form.name && form.email && form.phone && form.eventDate && Number(form.guests) > 0;
 
   return (
-    <section className="mx-auto flex w-full max-w-xl flex-col items-center px-5 py-12 sm:py-16">
-      <h1 className="text-center text-4xl font-extrabold leading-tight tracking-tight sm:text-6xl">
+    <section className="mx-auto flex w-full max-w-xl flex-col items-center py-8 sm:py-12">
+      <h1 className="text-center text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
         Book an activity
       </h1>
       <p className="mt-4 max-w-md text-center text-lg font-semibold leading-relaxed text-ink/80 sm:text-xl">
@@ -332,85 +357,87 @@ export default function Member() {
     window.location.href = "/";
   }
 
-  const tab = (v: View) => (view === v ? "text-pink" : "hover:text-pink");
+  const tabs: { view: View; label: string }[] = [
+    { view: "services", label: "Services" },
+    { view: "book", label: "Make a Booking" },
+    { view: "mybookings", label: "Bookings made" },
+  ];
+  if (user) tabs.push({ view: "chat", label: user.isAdmin ? "Talk to a user" : "Talk to a host" });
+  if (user?.isAdmin) tabs.push({ view: "bookings", label: "See bookings" });
+
+  const tabClass = (active: boolean) =>
+    `shrink-0 rounded-full px-5 py-2.5 text-base font-bold transition sm:text-lg ${
+      active ? "bg-ink text-white" : "text-ink hover:bg-ink/10"
+    }`;
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-clip">
-      <header className="flex w-full flex-wrap items-center justify-between gap-x-8 gap-y-2 border-b border-ink/15 px-5 py-5 sm:px-10 sm:py-7">
-        <button
-          type="button"
-          onClick={() => show("welcome")}
-          className="text-4xl font-extrabold leading-none tracking-tight sm:text-6xl"
-        >
+      <header className="flex w-full items-center justify-between gap-4 border-b border-ink/15 px-5 py-4 sm:px-10">
+        <button type="button" onClick={() => show("welcome")} className="text-3xl font-extrabold leading-none tracking-tight sm:text-4xl">
           Smart<span className="text-pink">Art</span>254
         </button>
-        <nav aria-label="Main" className="flex flex-wrap items-center gap-5 text-lg font-semibold sm:gap-10 sm:text-2xl">
-          {user && <Notifications />}
-          <a href="/" onClick={link("/")} className="hover:text-pink">
-            Home
-          </a>
-          <button
-            type="button"
-            onClick={() => show("services")}
-            aria-current={view === "services" ? "page" : undefined}
-            className={tab("services")}
-          >
-            Services
-          </button>
-          <button
-            type="button"
-            onClick={() => show("book")}
-            aria-current={view === "book" ? "page" : undefined}
-            className={tab("book")}
-          >
-            Make a Booking
-          </button>
-          <button
-            type="button"
-            onClick={() => show("mybookings")}
-            aria-current={view === "mybookings" ? "page" : undefined}
-            className={tab("mybookings")}
-          >
-            Bookings made
-          </button>
-          {user && (
-            <button
-              type="button"
-              onClick={() => show("chat")}
-              aria-current={view === "chat" ? "page" : undefined}
-              className={tab("chat")}
-            >
-              {user.isAdmin ? "Talk to a user" : "Talk to a host"}
-            </button>
-          )}
-          {user?.isAdmin && (
-            <button
-              type="button"
-              onClick={() => show("bookings")}
-              aria-current={view === "bookings" ? "page" : undefined}
-              className={tab("bookings")}
-            >
-              See bookings
-            </button>
-          )}
-        </nav>
+        {user && <Notifications />}
       </header>
 
-      <main className={`flex-1 ${view === "welcome" ? "flex flex-col" : ""}`}>
+      <main className="mx-auto w-full max-w-7xl flex-1 px-5 sm:px-10">
         {!user ? (
-          <p className="mx-auto w-full max-w-6xl px-5 py-16 text-xl font-semibold sm:px-10">Loading</p>
-        ) : view === "welcome" ? (
-          <Welcome user={user} onNavigate={show} onSignOut={handleSignOut} />
-        ) : view === "services" ? (
-          <Services />
-        ) : view === "mybookings" ? (
-          <MyBookings onBook={() => show("book")} />
-        ) : view === "chat" ? (
-          <Chat user={user} />
-        ) : view === "bookings" && user.isAdmin ? (
-          <AdminBookings />
+          <p className="py-16 text-xl font-semibold">Loading</p>
         ) : (
-          <BookingForm user={user} />
+          <>
+            <div className="flex items-center gap-5 pt-8 sm:gap-7 sm:pt-10">
+              <button
+                type="button"
+                onClick={() => show("welcome")}
+                aria-label="Back to overview"
+                className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-royal text-3xl font-extrabold text-white sm:h-28 sm:w-28 sm:text-5xl"
+              >
+                {initials(user.name)}
+              </button>
+              <div className="min-w-0">
+                <h2 className="truncate text-3xl font-extrabold sm:text-5xl">{user.name}</h2>
+                <p className="mt-1 truncate text-base font-semibold text-ink/70 sm:text-lg">{user.email ?? user.phone}</p>
+              </div>
+            </div>
+
+            <nav
+              aria-label="Main"
+              className="mt-6 flex items-center gap-2 overflow-x-auto border-b border-ink/15 pb-4 sm:mt-8"
+            >
+              <a href="/" onClick={link("/")} className={tabClass(false)}>
+                Home
+              </a>
+              {tabs.map((t) => (
+                <button
+                  key={t.view}
+                  type="button"
+                  onClick={() => show(t.view)}
+                  aria-current={view === t.view ? "page" : undefined}
+                  className={tabClass(view === t.view)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </nav>
+
+            <div className="grid gap-10 pt-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-12 lg:pt-6">
+              <div className="min-w-0">
+                {view === "welcome" ? (
+                  <Welcome user={user} />
+                ) : view === "services" ? (
+                  <Services />
+                ) : view === "mybookings" ? (
+                  <MyBookings onBook={() => show("book")} />
+                ) : view === "chat" ? (
+                  <Chat user={user} />
+                ) : view === "bookings" && user.isAdmin ? (
+                  <AdminBookings />
+                ) : (
+                  <BookingForm user={user} />
+                )}
+              </div>
+              <Sidebar user={user} view={view} onNavigate={show} onSignOut={handleSignOut} />
+            </div>
+          </>
         )}
       </main>
 

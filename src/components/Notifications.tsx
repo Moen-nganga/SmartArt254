@@ -13,6 +13,9 @@ interface NotificationsResponse {
   seenAt: string;
 }
 
+const PANEL_MAX = 416;
+const EDGE_GAP = 12;
+
 function formatTime(value: string) {
   return new Date(value).toLocaleString(undefined, {
     day: "numeric",
@@ -26,6 +29,7 @@ export default function Notifications() {
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [seenAt, setSeenAt] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  const [alignRight, setAlignRight] = useState(false);
   const [freshKeys, setFreshKeys] = useState<string[]>([]);
   const [loaded, setLoaded] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -72,6 +76,11 @@ export default function Notifications() {
     if (open) {
       setOpen(false);
       return;
+    }
+    if (box.current) {
+      const rect = box.current.getBoundingClientRect();
+      const width = Math.min(window.innerWidth - EDGE_GAP * 2, PANEL_MAX);
+      setAlignRight(rect.left + width > window.innerWidth - EDGE_GAP);
     }
     const unread = items.filter(isUnread);
     setFreshKeys(unread.map((i) => `${i.type}-${i.id}`));
@@ -120,7 +129,9 @@ export default function Notifications() {
         <div
           role="region"
           aria-label="Notifications"
-          className="absolute left-0 top-full z-50 mt-3 w-[min(92vw,26rem)] rounded-3xl border border-ink/10 bg-white p-4 text-left shadow-xl"
+          className={`absolute top-full z-50 mt-3 w-[min(calc(100vw-1.5rem),26rem)] rounded-3xl border border-ink/10 bg-white p-4 text-left shadow-xl ${
+            alignRight ? "right-0" : "left-0"
+          }`}
         >
           <p className="px-2 pb-3 text-sm font-semibold uppercase tracking-widest text-ink/70">Notifications</p>
           {items.length === 0 ? (
