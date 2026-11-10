@@ -1,7 +1,16 @@
 import { neon } from "@neondatabase/serverless";
 import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { applyCors, clearCookie, getUserId, makeCookie, makeToken } from "./_session.js";
+import {
+  APP_MAX_AGE,
+  applyCors,
+  clearCookie,
+  getUserId,
+  isAppRequest,
+  isAppSession,
+  makeCookie,
+  makeToken,
+} from "./_session.js";
 import { clientIp, hashKey, hit, resetLimit, tooMany } from "./_rateLimit.js";
 
 const SIGNIN_IP_LIMIT = 20;
@@ -43,6 +52,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const action = req.query.action;
   const sql = neon(process.env.DATABASE_URL as string);
+  const fromApp = isAppRequest(req);
+  const tokenFor = (id: number) => (fromApp ? { token: makeToken(id, APP_MAX_AGE) } : {});
 
   try {
     if (action === "me") {
@@ -50,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!id) return res.status(401).json({ error: "Not signed in" });
       const rows = await sql`SELECT id, name, email, phone, is_admin AS "isAdmin" FROM users WHERE id = ${id}`;
       if (!rows.length) return res.status(401).json({ error: "Not signed in" });
-      return res.status(200).json({ user: rows[0] });
+      return res.status(200).json({ user: rows[0], ...(isAppSession(req) ? tokenFor(id) : {}) });
     }
 
     if (req.method !== "POST") {
@@ -90,7 +101,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           RETURNING id, name, email, phone
         `;
         res.setHeader("Set-Cookie", makeCookie(rows[0].id));
-        return res.status(201).json({ user: rows[0], token: makeToken(rows[0].id) });
+        return res.status(201).json({ user: rows[0], ...tokenFor(rows[0].id) });
       }
 
       if (!/^\S+@\S+\.\S+$/.test(cleanEmail)) {
@@ -104,7 +115,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         RETURNING id, name, email, phone
       `;
       res.setHeader("Set-Cookie", makeCookie(rows[0].id));
-      return res.status(201).json({ user: rows[0], token: makeToken(rows[0].id) });
+      return res.status(201).json({ user: rows[0], ...tokenFor(rows[0].id) });
     }
 
     if (action === "signin") {
@@ -130,7 +141,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.setHeader("Set-Cookie", makeCookie(rows[0].id));
       return res.status(200).json({
         user: { id: rows[0].id, name: rows[0].name, email: rows[0].email, phone: rows[0].phone },
-        token: makeToken(rows[0].id),
+        ...tokenFor(rows[0].id),
       });
     }
 

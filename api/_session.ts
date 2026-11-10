@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 const MAX_AGE = 60 * 60 * 24 * 30;
+export const APP_MAX_AGE = 60 * 60 * 24 * 365;
 
 const ALLOWED_ORIGINS = new Set(["https://localhost", "capacitor://localhost", "http://localhost"]);
 
@@ -9,8 +10,8 @@ function sign(value: string) {
   return createHmac("sha256", process.env.SESSION_SECRET as string).update(value).digest("hex");
 }
 
-export function makeToken(userId: number) {
-  const exp = Math.floor(Date.now() / 1000) + MAX_AGE;
+export function makeToken(userId: number, maxAge: number = MAX_AGE) {
+  const exp = Math.floor(Date.now() / 1000) + maxAge;
   const payload = `${userId}.${exp}`;
   return `${payload}.${sign(payload)}`;
 }
@@ -30,6 +31,11 @@ export function verifyToken(token: string): number | null {
   return Number(id);
 }
 
+function hasBearer(req: VercelRequest) {
+  const auth = req.headers.authorization;
+  return Boolean(auth && auth.startsWith("Bearer "));
+}
+
 function readToken(req: VercelRequest): string | null {
   const auth = req.headers.authorization;
   if (auth && auth.startsWith("Bearer ")) return auth.slice(7).trim();
@@ -44,6 +50,15 @@ function readToken(req: VercelRequest): string | null {
 export function getUserId(req: VercelRequest): number | null {
   const token = readToken(req);
   return token ? verifyToken(token) : null;
+}
+
+export function isAppRequest(req: VercelRequest) {
+  const origin = req.headers.origin;
+  return typeof origin === "string" && ALLOWED_ORIGINS.has(origin);
+}
+
+export function isAppSession(req: VercelRequest) {
+  return isAppRequest(req) && hasBearer(req);
 }
 
 export function applyCors(req: VercelRequest, res: VercelResponse): boolean {

@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { makeCookie, makeToken } from "../_session.js";
+import { APP_MAX_AGE, makeCookie, makeToken } from "../_session.js";
 
 const APP_SCHEME = "com.smartart254.app";
 const clearState = "g_state=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0";
@@ -94,7 +94,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (fromApp) {
       res.setHeader("Set-Cookie", clearState);
-      return backToApp(res, `token=${encodeURIComponent(makeToken(userId))}`);
+      return backToApp(res, `token=${encodeURIComponent(makeToken(userId, APP_MAX_AGE))}`);
     }
 
     res.setHeader("Set-Cookie", [makeCookie(userId), clearState]);
