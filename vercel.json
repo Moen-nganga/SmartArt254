@@ -12,6 +12,7 @@
     { "source": "/workshops", "destination": "/workshops/index.html" },
     { "source": "/events", "destination": "/events/index.html" },
     { "source": "/highlights", "destination": "/highlights/index.html" },
+    { "source": "/gallery", "destination": "/gallery/index.html" },
     { "source": "/book", "destination": "/book/index.html" },
     { "source": "/privacy", "destination": "/privacy/index.html" },
     { "source": "/terms", "destination": "/terms/index.html" },
@@ -25,6 +26,10 @@
   "headers": [
     {
       "source": "/images/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }]
+    },
+    {
+      "source": "/videos/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }]
     },
     {

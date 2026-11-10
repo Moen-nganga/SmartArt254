@@ -17,6 +17,7 @@ import SignUp from "./pages/SignUp";
 import Member from "./pages/Member";
 import Talk from "./pages/Talk";
 import Highlights from "./pages/Highlights";
+import Gallery from "./pages/Gallery";
 
 const routes: Record<string, () => JSX.Element> = {
   "/": Home,
@@ -33,6 +34,7 @@ const routes: Record<string, () => JSX.Element> = {
   "/member": Member,
   "/talk": Talk,
   "/highlights": Highlights,
+  "/gallery": Gallery,
 };
 
 const openInApp = ["/signin", "/signup", "/privacy", "/terms"];

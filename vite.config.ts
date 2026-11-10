@@ -1,3 +1,5 @@
+import { existsSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -110,6 +112,19 @@ const routes: RouteSeo[] = [
     priority: "0.9",
     changefreq: "monthly",
     offers: ["Birthday Parties", "Corporate Team Days", "Family Days", "Weddings"],
+  },
+  {
+    path: "/gallery",
+    label: "Gallery",
+    title: "Gallery: Photos & Videos of Our Work | SmartArt254",
+    description:
+      "Browse photos and videos from SmartArt254 art workshops, school programmes, parties and events across Kenya.",
+    heading: "Gallery",
+    intro: "Photos and videos from SmartArt254 art sessions across Kenya.",
+    index: true,
+    schema: "CollectionPage",
+    priority: "0.6",
+    changefreq: "monthly",
   },
   {
     path: "/highlights",
@@ -369,6 +384,42 @@ const seoPlugin = (): Plugin => ({
   },
 });
 
+const galleryPlugin = (): Plugin => {
+  const virtualId = "virtual:gallery";
+  const resolvedId = "\0virtual:gallery";
+  let publicDir = "";
+
+  const scan = (folder: string, type: "image" | "video", pattern: RegExp, alt: string) => {
+    const dir = join(publicDir, folder);
+    if (!existsSync(dir)) return [];
+    return readdirSync(dir)
+      .filter((name) => pattern.test(name))
+      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+      .map((name) => ({ type, src: `/${folder}/${encodeURIComponent(name)}`, alt }));
+  };
+
+  return {
+    name: "smartart254-gallery",
+    configResolved(config) {
+      publicDir = config.publicDir;
+    },
+    resolveId(id) {
+      return id === virtualId ? resolvedId : null;
+    },
+    load(id) {
+      if (id !== resolvedId) return null;
+      const images = scan("images/gallery", "image", /\.(jpe?g|png|webp|gif|avif)$/i, "SmartArt254 gallery photo");
+      const videos = scan("videos/gallery", "video", /\.(mp4|webm|mov|m4v)$/i, "SmartArt254 gallery video");
+      const mixed = [];
+      for (let i = 0; i < Math.max(images.length, videos.length); i++) {
+        if (images[i]) mixed.push(images[i]);
+        if (videos[i]) mixed.push(videos[i]);
+      }
+      return `export default ${JSON.stringify(mixed)};`;
+    },
+  };
+};
+
 export default defineConfig({
-  plugins: [react(), tailwindcss(), seoPlugin()],
+  plugins: [react(), tailwindcss(), galleryPlugin(), seoPlugin()],
 });

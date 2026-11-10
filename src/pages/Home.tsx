@@ -2,6 +2,7 @@ import Layout from "../components/Layout";
 import Highlight from "../components/Highlight";
 import Icon from "../components/Icon";
 import Photo from "../components/Photo";
+import AutoVideo from "../components/AutoVideo";
 import Reveal from "../components/Reveal";
 import WhatsAppMenu from "../components/WhatsAppMenu";
 import { link } from "../navigate";
@@ -107,9 +108,10 @@ export default function Home() {
           </ul>
         </Reveal>
         <Reveal from="right" delay={150}>
-          <Photo
-            src="/images/home/who-we-are.jpg"
-            alt="SmartArt254 host guiding guests through an art session"
+          <AutoVideo
+            src="/videos/home/who-we-are.mp4"
+            poster="/images/home/who-we-are.jpg"
+            label="SmartArt254 host guiding guests through an art session"
             className="aspect-[4/3] w-full shadow-2xl"
           />
         </Reveal>
@@ -140,6 +142,13 @@ export default function Home() {
             </Reveal>
           ))}
         </div>
+        <Reveal from="up">
+          <div className="mt-16 text-center">
+            <a href="/gallery" onClick={link("/gallery")} className="inline-block rounded-full bg-sun px-7 py-3 text-lg font-bold text-ink">
+              Check out our work
+            </a>
+          </div>
+        </Reveal>
       </section>
 
       <section className="mx-auto max-w-6xl px-5 pb-16 sm:px-10">
