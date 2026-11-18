@@ -111,7 +111,7 @@ const routes: RouteSeo[] = [
     imageAlt: "Families enjoying an art activity at a SmartArt254 event",
     priority: "0.9",
     changefreq: "monthly",
-    offers: ["Birthday Parties", "Corporate Team Days", "Family Days", "Weddings"],
+    offers: ["Birthday Parties", "Corporate Team Days", "Family Days", "Weddings", "Worship and Painting experience"],
   },
   {
     path: "/gallery",

@@ -30,6 +30,7 @@ export const eventOffers: Offer[] = [
   { title: "Weddings", text: "We also organize guest art stations and a keepsake canvas for couples and wedding guests.", accent: "pink" },
   { title: "Family days", text: "We host relaxed sessions for parents and children to create together.", accent: "leaf" },
   { title: "Corporate team days", text: "We structure team building activities centered around shared art projects.", accent: "royal" },
+  { title: "Worship and Painting experience", text: "We host religious worship experiences accompanied with canvas painting sessions.", accent: "sun" },
 ];
 
 export const bookingOptions: string[] = [
