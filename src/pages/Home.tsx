@@ -6,6 +6,7 @@ import AutoVideo from "../components/AutoVideo";
 import Reveal from "../components/Reveal";
 import WhatsAppMenu from "../components/WhatsAppMenu";
 import { link } from "../navigate";
+import { isNative } from "../native";
 
 const dots = ["bg-pink", "bg-sun", "bg-leaf", "bg-royal"];
 
@@ -142,13 +143,15 @@ export default function Home() {
             </Reveal>
           ))}
         </div>
-        <Reveal from="up">
-          <div className="mt-16 text-center">
-            <a href="/gallery" onClick={link("/gallery")} className="inline-block rounded-full bg-sun px-7 py-3 text-lg font-bold text-ink">
-              Check out our work
-            </a>
-          </div>
-        </Reveal>
+        {isNative ? null : (
+          <Reveal from="up">
+            <div className="mt-16 text-center">
+              <a href="/gallery" onClick={link("/gallery")} className="inline-block rounded-full bg-sun px-7 py-3 text-lg font-bold text-ink">
+                Check out our work
+              </a>
+            </div>
+          </Reveal>
+        )}
       </section>
 
       <section className="mx-auto max-w-6xl px-5 pb-16 sm:px-10">

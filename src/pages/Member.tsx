@@ -10,6 +10,7 @@ import { eventOffers, needOptions, schoolOffers, workshopOffers } from "../data"
 import { getUser, signOut } from "../auth";
 import type { User } from "../auth";
 import { link } from "../navigate";
+import { isNative, onBack } from "../native";
 
 type View = "welcome" | "services" | "book" | "mybookings" | "bookings" | "chat";
 
@@ -336,6 +337,7 @@ function BookingForm({ user }: { user: User }) {
 export default function Member() {
   const [user, setUser] = useState<User | null>(null);
   const [view, setView] = useState<View>("welcome");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     getUser().then((found) => {
@@ -347,8 +349,25 @@ export default function Member() {
     });
   }, []);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+    const off = onBack(() => {
+      setMenuOpen(false);
+      return true;
+    });
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      off();
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
+
   function show(next: View) {
     setView(next);
+    setMenuOpen(false);
     window.scrollTo(0, 0);
   }
 
@@ -370,40 +389,69 @@ export default function Member() {
       active ? "bg-ink text-white" : "text-ink hover:bg-ink/10"
     }`;
 
+  const menuItemClass = (active: boolean) =>
+    `block w-full rounded-2xl px-4 py-3 text-left text-lg font-bold transition ${
+      active ? "bg-ink text-white" : "text-ink hover:bg-ink/10"
+    }`;
+
   return (
     <div className="flex min-h-screen flex-col overflow-x-clip">
-      <header className="flex w-full items-center justify-between gap-4 border-b border-ink/15 px-5 py-4 sm:px-10">
+      <header className="relative flex w-full items-center justify-between gap-4 border-b border-ink/15 px-5 py-4 sm:px-10">
         <button type="button" onClick={() => show("welcome")} className="text-3xl font-extrabold leading-none tracking-tight sm:text-4xl">
           Smart<span className="text-pink">Art</span>254
         </button>
-        {user && <Notifications />}
-      </header>
-
-      <main className="mx-auto w-full max-w-7xl flex-1 px-5 sm:px-10">
-        {!user ? (
-          <p className="py-16 text-xl font-semibold">Loading</p>
-        ) : (
-          <>
-            <div className="flex items-center gap-5 pt-8 sm:gap-7 sm:pt-10">
-              <button
-                type="button"
-                onClick={() => show("welcome")}
-                aria-label="Back to overview"
-                className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-royal text-3xl font-extrabold text-white sm:h-28 sm:w-28 sm:text-5xl"
-              >
-                {initials(user.name)}
-              </button>
-              <div className="min-w-0">
-                <h2 className="truncate text-3xl font-extrabold sm:text-5xl">{user.name}</h2>
-                <p className="mt-1 truncate text-base font-semibold text-ink/70 sm:text-lg">{user.email ?? user.phone}</p>
-              </div>
-            </div>
-
-            <nav
-              aria-label="Main"
-              className="mt-6 flex items-center gap-2 overflow-x-auto border-b border-ink/15 pb-4 sm:mt-8"
+        <div className="flex items-center gap-3">
+          {user && <Notifications />}
+          {isNative && user && (
+            <button
+              type="button"
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+              aria-controls="app-menu"
+              onClick={() => setMenuOpen((open) => !open)}
+              className="relative z-50 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ink text-white"
             >
-              <a href="/" onClick={link("/")} className={tabClass(false)}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-6 w-6"
+                aria-hidden="true"
+              >
+                {menuOpen ? (
+                  <>
+                    <path d="M6 6l12 12" />
+                    <path d="M18 6L6 18" />
+                  </>
+                ) : (
+                  <>
+                    <path d="M4 7h16" />
+                    <path d="M4 12h16" />
+                    <path d="M4 17h16" />
+                  </>
+                )}
+              </svg>
+            </button>
+          )}
+        </div>
+        {isNative && user && menuOpen && (
+          <>
+            <button
+              type="button"
+              aria-label="Close menu"
+              onClick={() => setMenuOpen(false)}
+              className="fixed inset-0 z-40 cursor-default bg-ink/40"
+            />
+            <nav
+              id="app-menu"
+              aria-label="Main"
+              className="absolute right-5 top-full z-50 mt-2 w-72 rounded-3xl border border-ink/10 bg-white p-3 shadow-xl"
+            >
+              <a href="/" onClick={link("/")} className={menuItemClass(false)}>
                 Home
               </a>
               {tabs.map((t) => (
@@ -412,14 +460,71 @@ export default function Member() {
                   type="button"
                   onClick={() => show(t.view)}
                   aria-current={view === t.view ? "page" : undefined}
-                  className={tabClass(view === t.view)}
+                  className={menuItemClass(view === t.view)}
                 >
                   {t.label}
                 </button>
               ))}
+              <div className="my-2 border-t border-ink/15" />
+              <button type="button" onClick={handleSignOut} className={menuItemClass(false)}>
+                Sign out
+              </button>
             </nav>
+          </>
+        )}
+      </header>
 
-            <div className="grid gap-10 pt-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-12 lg:pt-6">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-5 sm:px-10">
+        {!user ? (
+          <p className="py-16 text-xl font-semibold">Loading</p>
+        ) : (
+          <>
+            <div className={`flex items-center pt-8 sm:pt-10 ${isNative ? "gap-4" : "gap-5 sm:gap-7"}`}>
+              <button
+                type="button"
+                onClick={() => show("welcome")}
+                aria-label="Back to overview"
+                className={`flex shrink-0 items-center justify-center rounded-full bg-royal font-extrabold text-white ${
+                  isNative ? "h-16 w-16 text-2xl" : "h-20 w-20 text-3xl sm:h-28 sm:w-28 sm:text-5xl"
+                }`}
+              >
+                {initials(user.name)}
+              </button>
+              <div className="min-w-0">
+                <h2 className={`truncate font-extrabold ${isNative ? "text-2xl" : "text-3xl sm:text-5xl"}`}>{user.name}</h2>
+                <p className={`mt-1 truncate font-semibold text-ink/70 ${isNative ? "text-base" : "text-base sm:text-lg"}`}>
+                  {user.email ?? user.phone}
+                </p>
+              </div>
+            </div>
+
+            {isNative ? (
+              <div className="mt-6 border-b border-ink/15" />
+            ) : (
+              <nav
+                aria-label="Main"
+                className="mt-6 flex items-center gap-2 overflow-x-auto border-b border-ink/15 pb-4 sm:mt-8"
+              >
+                <a href="/" onClick={link("/")} className={tabClass(false)}>
+                  Home
+                </a>
+                {tabs.map((t) => (
+                  <button
+                    key={t.view}
+                    type="button"
+                    onClick={() => show(t.view)}
+                    aria-current={view === t.view ? "page" : undefined}
+                    className={tabClass(view === t.view)}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </nav>
+            )}
+
+            <div
+              className={`grid gap-10 pt-4 ${isNative ? "" : "lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-12 lg:pt-6"}`}
+            >
               <div className="min-w-0">
                 {view === "welcome" ? (
                   <Welcome user={user} />
@@ -435,7 +540,9 @@ export default function Member() {
                   <BookingForm user={user} />
                 )}
               </div>
-              <Sidebar user={user} view={view} onNavigate={show} onSignOut={handleSignOut} />
+              {isNative && view !== "welcome" ? null : (
+                <Sidebar user={user} view={view} onNavigate={show} onSignOut={handleSignOut} />
+              )}
             </div>
           </>
         )}

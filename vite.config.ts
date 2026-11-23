@@ -1,5 +1,5 @@
-import { existsSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readdirSync, rmSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -384,7 +384,7 @@ const seoPlugin = (): Plugin => ({
   },
 });
 
-const galleryPlugin = (): Plugin => {
+const galleryPlugin = (skipMedia: boolean): Plugin => {
   const virtualId = "virtual:gallery";
   const resolvedId = "\0virtual:gallery";
   let publicDir = "";
@@ -408,6 +408,7 @@ const galleryPlugin = (): Plugin => {
     },
     load(id) {
       if (id !== resolvedId) return null;
+      if (skipMedia) return "export default [];";
       const images = scan("images/gallery", "image", /\.(jpe?g|png|webp|gif|avif)$/i, "SmartArt254 gallery photo");
       const videos = scan("videos/gallery", "video", /\.(mp4|webm|mov|m4v)$/i, "SmartArt254 gallery video");
       const mixed = [];
@@ -420,6 +421,26 @@ const galleryPlugin = (): Plugin => {
   };
 };
 
-export default defineConfig({
-  plugins: [react(), tailwindcss(), galleryPlugin(), seoPlugin()],
+const appTrimPlugin = (): Plugin => {
+  let outDir = "";
+
+  return {
+    name: "smartart254-app-trim",
+    apply: "build",
+    configResolved(config) {
+      outDir = resolve(config.root, config.build.outDir);
+    },
+    closeBundle() {
+      for (const folder of ["images/gallery", "videos/gallery", "downloads"]) {
+        rmSync(join(outDir, folder), { recursive: true, force: true });
+      }
+    },
+  };
+};
+
+export default defineConfig(({ mode }) => {
+  const app = mode === "app";
+  return {
+    plugins: [react(), tailwindcss(), galleryPlugin(app), seoPlugin(), ...(app ? [appTrimPlugin()] : [])],
+  };
 });
