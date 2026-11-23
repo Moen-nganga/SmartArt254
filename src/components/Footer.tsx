@@ -14,6 +14,20 @@ const phones = [
   { display: "0704 537 582", tel: "+254704537582" },
 ];
 
+const socials = [
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/smartart254",
+    icon: (
+      <>
+        <rect x="3" y="3" width="18" height="18" rx="5" />
+        <circle cx="12" cy="12" r="4" />
+        <circle cx="17.5" cy="6.5" r="0.75" fill="currentColor" stroke="none" />
+      </>
+    ),
+  },
+];
+
 export default function Footer() {
   return (
     <footer className="mt-8 border-t border-ink/15">
@@ -66,6 +80,32 @@ export default function Footer() {
               </span>
             ))}
           </p>
+          <div className="mt-3 flex items-center gap-4">
+            {socials.map((s) => (
+              <a
+                key={s.label}
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`SmartArt254 on ${s.label}`}
+                className="text-ink transition hover:text-pink"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-6 w-6"
+                  aria-hidden="true"
+                >
+                  {s.icon}
+                </svg>
+              </a>
+            ))}
+          </div>
         </div>
         <nav aria-label="Footer" className="flex flex-wrap items-center gap-x-7 gap-y-2 text-base font-semibold">
           {items.map((item) => (
