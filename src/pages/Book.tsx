@@ -29,6 +29,21 @@ const whatsappLines = [
   { display: "0704 537 582", number: "254704537582" },
 ];
 
+const rateCard = [
+  { activity: "Primed Canvas Painting", price: 500 },
+  { activity: "Original Canvas Painting", price: 700 },
+  { activity: "Slime Making", price: 500 },
+  { activity: "Tote Bag Art", price: 700 },
+  { activity: "Cutout Painting", price: 600 },
+  { activity: "Face Painting", price: 200 },
+  { activity: "T-Shirt Art", price: 1200 },
+  { activity: "Hat Art", price: 700 },
+  { activity: "Pot Painting", price: 800 },
+  { activity: "Bottle Art", price: 500 },
+  { activity: "Mirror Art", price: 600 },
+  { activity: "String Board Art", price: 800 },
+];
+
 const field =
   "mt-1 w-full rounded-xl border-2 border-ink/20 bg-white px-3 py-2.5 text-base text-ink placeholder:text-ink/40 focus:border-royal focus:outline-none focus:ring-2 focus:ring-royal/30";
 
@@ -180,6 +195,37 @@ export default function Book() {
               </span>
             ))}
           </p>
+        </div>
+        <div className="mt-6 overflow-hidden rounded-3xl border border-ink/10 bg-white/80 shadow-xl backdrop-blur-sm">
+          <div className="bg-ink px-5 py-4 text-white sm:px-8">
+            <h2 className="text-2xl font-extrabold">Rate card</h2>
+            <p className="text-sm text-white/80">Fun, creative, memorable experiences for every occasion</p>
+          </div>
+          <table className="w-full text-left text-base">
+            <caption className="sr-only">SmartArt254 creative art activities and prices in Kenya shillings</caption>
+            <thead>
+              <tr className="border-b border-ink/15 text-sm uppercase tracking-wide text-ink/70">
+                <th scope="col" className="px-5 py-3 font-bold sm:px-8">
+                  Activity
+                </th>
+                <th scope="col" className="px-5 py-3 text-right font-bold sm:px-8">
+                  Price (KES)
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rateCard.map((row) => (
+                <tr key={row.activity} className="border-b border-ink/10 last:border-b-0 odd:bg-ink/5">
+                  <th scope="row" className="px-5 py-3 font-semibold sm:px-8">
+                    {row.activity}
+                  </th>
+                  <td className="px-5 py-3 text-right font-extrabold text-royal sm:px-8">
+                    {row.price.toLocaleString("en-KE")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
     </Layout>
